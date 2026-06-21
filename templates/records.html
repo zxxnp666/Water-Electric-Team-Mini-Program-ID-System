@@ -1,0 +1,619 @@
+{% extends "base.html" %}
+
+{% block title %}记录管理 - 水电班仓库管理系统{% endblock %}
+
+{% block page_title %}记录管理{% endblock %}
+
+{% block content %}
+<!-- 筛选条件 -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h6 class="mb-0">
+            <i class="bi bi-funnel"></i> 筛选条件
+            <button class="btn btn-sm btn-outline-secondary float-end" type="button" 
+                    data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                <i class="bi bi-chevron-down"></i> 展开/收起
+            </button>
+        </h6>
+    </div>
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">状态筛选</label>
+                    <select name="status" class="form-select">
+                        <option value="">全部状态</option>
+                        {% for status in status_options %}
+                        <option value="{{ status }}" {% if status == status_filter %}selected{% endif %}>
+                            {{ status }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">用户筛选</label>
+                    <input type="text" class="form-control" name="user" 
+                           value="{{ user_filter }}" placeholder="输入用户名...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">材料名称</label>
+                    <input type="text" class="form-control" name="material" 
+                           value="{{ material_filter }}" placeholder="输入材料名称...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">条码搜索</label>
+                    <input type="text" class="form-control" name="barcode" 
+                           value="{{ barcode_filter }}" placeholder="输入条码...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">开始日期</label>
+                    <input type="date" class="form-control" name="start_date" value="{{ start_date_filter }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">结束日期</label>
+                    <input type="date" class="form-control" name="end_date" value="{{ end_date_filter }}">
+                </div>
+                <div class="col-12">
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> 搜索记录
+                        </button>
+                        <a href="{{ url_for('records') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> 重置筛选
+                        </a>
+                        <button type="button" class="btn btn-outline-success" onclick="exportRecords()">
+                            <i class="bi bi-download"></i> 导出Excel
+                        </button>
+                        <div class="ms-auto">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> 
+                                支持多条件组合筛选，留空表示不限制该条件
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 记录列表 -->
+<div class="card">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-journal-text"></i> 出库记录
+        </h5>
+        <span class="badge bg-light text-dark">共 {{ total }} 条记录</span>
+    </div>
+    <div class="card-body p-0">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>记录ID</th>
+                        <th>材料信息</th>
+                        <th>数量</th>
+                        <th>操作人</th>
+                        <th>操作时间</th>
+                        <th>当前状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td>
+                            <code>#{{ record.id }}</code>
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ record.name or '未知材料' }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    条码: {{ record.barcode }}
+                                    {% if record.specification %}
+                                    <br>规格: {{ record.specification }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">
+                                {{ record.quantity }} {{ record.unit or '个' }}
+                            </span>
+                        </td>
+                        <td>{{ record.user }}</td>
+                        <td>
+                            <small>{{ record.time.strftime('%Y-%m-%d %H:%M:%S') if record.time else '-' }}</small>
+                        </td>
+                        <td>
+                            {% if record.status == '处理中' %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock"></i> {{ record.status }}
+                                </span>
+                            {% elif record.status == '处理完成' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> {{ record.status }}
+                                </span>
+                            {% elif record.status == '无法处理' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> {{ record.status }}
+                                </span>
+                            {% elif record.status == '已取消' %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-dash-circle"></i> {{ record.status }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-light text-dark">{{ record.status or '未知' }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                        onclick="showRecordDetail({{ record.id }}, '{{ record.barcode }}', '{{ record.name or '未知材料' }}', '{{ record.specification or '' }}', {{ record.quantity }}, '{{ record.unit or '个' }}', '{{ record.user }}', '{{ record.time.strftime('%Y-%m-%d %H:%M:%S') if record.time else '-' }}', '{{ record.status }}')">
+                                    <i class="bi bi-eye"></i> 详情
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" 
+                                        data-bs-toggle="dropdown">
+                                    <i class="bi bi-gear"></i> 状态
+                                </button>
+                                <ul class="dropdown-menu">
+                                    {% for status in status_options %}
+                                    <li>
+                                        <a class="dropdown-item" href="#" 
+                                           onclick="updateRecordStatus({{ record.id }}, '{{ status }}')">
+                                            {% if status == '处理中' %}
+                                                <i class="bi bi-clock text-warning"></i>
+                                            {% elif status == '处理完成' %}
+                                                <i class="bi bi-check-circle text-success"></i>
+                                            {% elif status == '无法处理' %}
+                                                <i class="bi bi-x-circle text-danger"></i>
+                                            {% elif status == '已取消' %}
+                                                <i class="bi bi-dash-circle text-secondary"></i>
+                                            {% endif %}
+                                            {{ status }}
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-journal-x display-1 text-muted"></i>
+            <h5 class="text-muted mt-3">没有找到记录</h5>
+            <p class="text-muted">请尝试调整筛选条件</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- 分页 -->
+    {% if total_pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="记录列表分页">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('records', status=status_filter, user=user_filter, material=material_filter, barcode=barcode_filter, start_date=start_date_filter, end_date=end_date_filter, page=page-1) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ p }}</span>
+                    </li>
+                    {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('records', status=status_filter, user=user_filter, material=material_filter, barcode=barcode_filter, start_date=start_date_filter, end_date=end_date_filter, page=p) }}">{{ p }}</a>
+                    </li>
+                    {% elif p == 4 or p == total_pages - 3 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('records', status=status_filter, user=user_filter, material=material_filter, barcode=barcode_filter, start_date=start_date_filter, end_date=end_date_filter, page=page+1) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 记录详情模态框 -->
+<div class="modal fade" id="recordDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-journal-text"></i> 出库记录详情
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-box"></i> 材料信息</h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row">
+                                    <dt class="col-sm-4">材料名称:</dt>
+                                    <dd class="col-sm-8" id="detail-name">-</dd>
+                                    
+                                    <dt class="col-sm-4">材料条码:</dt>
+                                    <dd class="col-sm-8">
+                                        <code id="detail-barcode">-</code>
+                                    </dd>
+                                    
+                                    <dt class="col-sm-4">规格型号:</dt>
+                                    <dd class="col-sm-8" id="detail-specification">-</dd>
+                                    
+                                    <dt class="col-sm-4">出库数量:</dt>
+                                    <dd class="col-sm-8">
+                                        <span class="badge bg-info fs-6" id="detail-quantity">-</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-person"></i> 操作信息</h6>
+                            </div>
+                            <div class="card-body">
+                                <dl class="row">
+                                    <dt class="col-sm-4">记录ID:</dt>
+                                    <dd class="col-sm-8">
+                                        <code id="detail-id">-</code>
+                                    </dd>
+                                    
+                                    <dt class="col-sm-4">操作人员:</dt>
+                                    <dd class="col-sm-8" id="detail-user">-</dd>
+                                    
+                                    <dt class="col-sm-4">操作时间:</dt>
+                                    <dd class="col-sm-8" id="detail-time">-</dd>
+                                    
+                                    <dt class="col-sm-4">当前状态:</dt>
+                                    <dd class="col-sm-8">
+                                        <span id="detail-status-badge">-</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作历史 -->
+                <div class="card mt-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-clock-history"></i> 操作历史</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="operation-history">
+                            <div class="text-center text-muted">
+                                <i class="bi bi-hourglass-split"></i>
+                                <p class="mb-0">加载中...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> 关闭
+                </button>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" 
+                            data-bs-toggle="dropdown" id="detail-status-btn">
+                        <i class="bi bi-gear"></i> 更改状态
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for status in status_options %}
+                        <li>
+                            <a class="dropdown-item" href="#" 
+                               onclick="updateRecordStatusFromDetail('{{ status }}')">
+                                {% if status == '处理中' %}
+                                    <i class="bi bi-clock text-warning"></i>
+                                {% elif status == '处理完成' %}
+                                    <i class="bi bi-check-circle text-success"></i>
+                                {% elif status == '无法处理' %}
+                                    <i class="bi bi-x-circle text-danger"></i>
+                                {% elif status == '已取消' %}
+                                    <i class="bi bi-dash-circle text-secondary"></i>
+                                {% endif %}
+                                {{ status }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量操作模态框 -->
+<div class="modal fade" id="batchUpdateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">批量更新状态</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>选择要批量更新的状态：</p>
+                <div class="d-grid gap-2">
+                    {% for status in status_options %}
+                    <button type="button" class="btn btn-outline-primary" 
+                            onclick="batchUpdateStatus('{{ status }}')">
+                        {{ status }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 全局变量存储当前查看的记录ID
+    let currentRecordId = null;
+    
+    // 显示记录详情
+    function showRecordDetail(id, barcode, name, specification, quantity, unit, user, time, status) {
+        currentRecordId = id;
+        
+        // 填充基本信息
+        document.getElementById('detail-id').textContent = '#' + id;
+        document.getElementById('detail-barcode').textContent = barcode;
+        document.getElementById('detail-name').textContent = name;
+        document.getElementById('detail-specification').textContent = specification || '无';
+        document.getElementById('detail-quantity').textContent = quantity + ' ' + unit;
+        document.getElementById('detail-user').textContent = user;
+        document.getElementById('detail-time').textContent = time;
+        
+        // 设置状态徽章
+        const statusBadge = document.getElementById('detail-status-badge');
+        statusBadge.className = 'badge fs-6 ' + getStatusBadgeClass(status);
+        statusBadge.innerHTML = getStatusIcon(status) + ' ' + status;
+        
+        // 加载操作历史
+        loadOperationHistory(id);
+        
+        // 显示模态框
+        const modal = new bootstrap.Modal(document.getElementById('recordDetailModal'));
+        modal.show();
+    }
+    
+    // 获取状态徽章样式
+    function getStatusBadgeClass(status) {
+        const statusClasses = {
+            '处理中': 'bg-warning',
+            '处理完成': 'bg-success',
+            '无法处理': 'bg-danger',
+            '已取消': 'bg-secondary'
+        };
+        return statusClasses[status] || 'bg-light text-dark';
+    }
+    
+    // 获取状态图标
+    function getStatusIcon(status) {
+        const statusIcons = {
+            '处理中': '<i class="bi bi-clock"></i>',
+            '处理完成': '<i class="bi bi-check-circle"></i>',
+            '无法处理': '<i class="bi bi-x-circle"></i>',
+            '已取消': '<i class="bi bi-dash-circle"></i>'
+        };
+        return statusIcons[status] || '<i class="bi bi-question-circle"></i>';
+    }
+    
+    // 加载操作历史
+    function loadOperationHistory(recordId) {
+        const historyDiv = document.getElementById('operation-history');
+        historyDiv.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="bi bi-hourglass-split"></i>
+                <p class="mb-0">加载中...</p>
+            </div>
+        `;
+        
+        // 模拟操作历史数据（实际应该从后端获取）
+        setTimeout(() => {
+            historyDiv.innerHTML = `
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">记录创建</h6>
+                            <p class="mb-1 text-muted">系统自动创建出库记录</p>
+                            <small class="text-muted">刚刚</small>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                    .timeline {
+                        position: relative;
+                        padding-left: 30px;
+                    }
+                    .timeline::before {
+                        content: '';
+                        position: absolute;
+                        left: 15px;
+                        top: 0;
+                        bottom: 0;
+                        width: 2px;
+                        background: #dee2e6;
+                    }
+                    .timeline-item {
+                        position: relative;
+                        margin-bottom: 20px;
+                    }
+                    .timeline-marker {
+                        position: absolute;
+                        left: -22px;
+                        top: 0;
+                        width: 12px;
+                        height: 12px;
+                        border-radius: 50%;
+                        border: 2px solid #fff;
+                        box-shadow: 0 0 0 2px #dee2e6;
+                    }
+                    .timeline-content {
+                        background: #f8f9fa;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border-left: 3px solid #007bff;
+                    }
+                </style>
+            `;
+        }, 500);
+    }
+    
+    // 从详情页更新状态
+    function updateRecordStatusFromDetail(newStatus) {
+        if (!currentRecordId) return;
+        updateRecordStatus(currentRecordId, newStatus);
+    }
+    
+    // 更新单个记录状态
+    function updateRecordStatus(recordId, newStatus) {
+        if (!confirm(`确定要将记录状态更新为"${newStatus}"吗？`)) {
+            return;
+        }
+        
+        fetch('/api/update_record_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                record_id: recordId,
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('状态更新成功', 'success');
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('recordDetailModal'));
+                if (modal) modal.hide();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showAlert('更新失败: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('网络错误', 'error');
+        });
+    }
+    
+    // 显示提示消息
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('main');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+    
+    // 状态颜色映射
+    const statusColors = {
+        '处理中': 'warning',
+        '处理完成': 'success',
+        '无法处理': 'danger',
+        '已取消': 'secondary'
+    };
+    
+    // 导出Excel功能
+    function exportRecords() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', 'excel');
+        
+        showAlert('正在准备导出文件...', 'info');
+        
+        // 创建下载链接
+        const downloadUrl = `{{ url_for('records') }}?${params.toString()}`;
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `出库记录_${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => {
+            showAlert('导出完成！', 'success');
+        }, 2000);
+    }
+    
+    // 添加行点击效果
+    document.querySelectorAll('tbody tr').forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    // 自动保存筛选条件到localStorage
+    function saveFilterState() {
+        const filters = {
+            status: document.querySelector('select[name="status"]').value,
+            user: document.querySelector('input[name="user"]').value,
+            material: document.querySelector('input[name="material"]').value,
+            barcode: document.querySelector('input[name="barcode"]').value,
+            start_date: document.querySelector('input[name="start_date"]').value,
+            end_date: document.querySelector('input[name="end_date"]').value
+        };
+        localStorage.setItem('recordsFilter', JSON.stringify(filters));
+    }
+    
+    // 页面加载时恢复筛选条件
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedFilters = localStorage.getItem('recordsFilter');
+        if (savedFilters && !window.location.search) {
+            const filters = JSON.parse(savedFilters);
+            Object.keys(filters).forEach(key => {
+                const element = document.querySelector(`[name="${key}"]`);
+                if (element && filters[key]) {
+                    element.value = filters[key];
+                }
+            });
+        }
+        
+        // 监听表单变化
+        document.querySelector('form').addEventListener('change', saveFilterState);
+    });
+</script>
+{% endblock %}

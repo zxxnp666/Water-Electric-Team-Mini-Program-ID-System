@@ -1,0 +1,93 @@
+<!--pages/index/index.wxml-->
+<view class="main-container">
+  <!-- 顶部用户信息卡片 -->
+  <view class="container">
+    <view class="card">
+      <view class="card-header">
+        <view class="card-title">🔧 水电班仓库管理</view>
+        <view class="card-subtitle">智能扫码 · 高效出库</view>
+      </view>
+      <view class="card-body">
+        <view class="flex align-center justify-between">
+          <view class="flex align-center">
+            <view class="list-item-icon" style="margin-right: 16rpx; width: 60rpx; height: 60rpx; font-size: 24rpx;">
+              👤
+            </view>
+            <view>
+              <view class="text-bold">{{userInfo.name || '请先登录'}}</view>
+              <view class="text-small status-info">{{userInfo.department}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+
+    <!-- 统计卡片 -->
+    <view class="stats-grid">
+      <view class="stats-card single-stat">
+        <view class="stats-number status-success">{{systemStats.todayCheckout}}</view>
+        <view class="stats-label">今日出库</view>
+      </view>
+    </view>
+
+    <!-- 快捷操作 -->
+    <view class="card">
+      <view class="card-header">
+        <view class="card-title">⚡ 快捷操作</view>
+      </view>
+      <view class="card-body">
+        <view class="flex" style="gap: 16rpx;">
+          <view class="btn btn-primary flex-1" bindtap="quickScan">
+            <text class="icon">📷</text>扫码出库
+          </view>
+          <view class="btn btn-success flex-1" bindtap="viewCart">
+            <text class="icon">🛒</text>待出库
+            <view wx:if="{{cartStats.itemCount > 0}}" class="badge" style="margin-left: 8rpx;">
+              {{cartStats.itemCount}}
+            </view>
+          </view>
+        </view>
+        
+        <view class="flex mt-16" style="gap: 16rpx;">
+          <view class="btn btn-outline flex-1" bindtap="viewMaterials">
+            <text class="icon">📦</text>物资查询
+          </view>
+          <view class="btn btn-outline flex-1" bindtap="viewHistory">
+            <text class="icon">📊</text>历史记录
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 最近使用的物资 -->
+    <view class="card" wx:if="{{recentMaterials.length > 0}}">
+      <view class="card-header">
+        <view class="card-title">📦 最近物资</view>
+        <view class="card-subtitle">点击快速加入待出库</view>
+      </view>
+      <view class="list">
+        <view class="list-item" 
+              wx:for="{{recentMaterials}}" 
+              wx:key="barcode"
+              bindtap="selectRecentMaterial"
+              data-index="{{index}}">
+          <view class="list-item-icon">📦</view>
+          <view class="list-item-content">
+            <view class="list-item-title">{{item.name}}</view>
+            <view class="list-item-subtitle">
+              {{item.specification}} | 库存: {{item.stock}}{{item.unit}}
+            </view>
+          </view>
+          <view class="list-item-arrow">＋</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading" wx:if="{{isLoading}}">
+      <text>🔄 加载中...</text>
+    </view>
+
+  </view>
+</view>

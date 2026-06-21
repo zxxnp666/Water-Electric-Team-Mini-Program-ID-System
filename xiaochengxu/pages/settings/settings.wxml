@@ -1,0 +1,242 @@
+<!--pages/settings/settings.wxml-->
+<view class="container">
+  
+  <!-- 登录状态显示 -->
+  <view class="status-section">
+    <view class="status-card {{workerInfo.name ? 'logged-in' : 'logged-out'}}">
+      <view class="status-header">
+        <text class="status-icon">{{workerInfo.name ? '👤' : '🔒'}}</text>
+        <text class="status-title">{{workerInfo.name ? '已登录' : '未登录'}}</text>
+        
+        <!-- 服务器状态指示器 -->
+        <view class="server-indicator" wx:if="{{!workerInfo.name}}">
+          <text class="indicator-dot {{serverConfig.configured ? (connectionStatus === 'connected' ? 'connected' : 'disconnected') : 'unconfigured'}}"></text>
+          <text class="indicator-text">
+            {{serverConfig.configured ? (connectionStatus === 'connected' ? '服务器已连接' : '服务器未连接') : '服务器未配置'}}
+          </text>
+        </view>
+      </view>
+      
+      <view wx:if="{{workerInfo.name}}" class="worker-info">
+        <view class="info-row">
+          <text class="label">姓名：</text>
+          <text class="value">{{workerInfo.name}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">工号：</text>
+          <text class="value">{{workerInfo.worker_id}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">部门：</text>
+          <text class="value">{{workerInfo.department}}</text>
+        </view>
+        <view class="info-row" wx:if="{{workerInfo.position}}">
+          <text class="label">职位：</text>
+          <text class="value">{{workerInfo.position}}</text>
+        </view>
+      </view>
+      
+      <view wx:else class="login-prompt">
+        <text class="prompt-text">请先登录以使用完整功能</text>
+        
+        <!-- 服务器配置提示 -->
+        <view wx:if="{{!serverConfig.configured}}" class="config-hint">
+          <text class="hint-text">⚠️ 登录前需要先配置服务器地址</text>
+          <button class="quick-config-btn" bindtap="showServerConfig">
+            🌐 配置服务器
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 登录/登出按钮 -->
+  <view class="action-section">
+    <button 
+      wx:if="{{!workerInfo.name}}" 
+      class="action-btn login-btn" 
+      bindtap="showLoginDialog"
+    >
+      🔑 工人登录
+    </button>
+    
+    <button 
+      wx:else 
+      class="action-btn logout-btn" 
+      bindtap="logout"
+    >
+      🚪 退出登录
+    </button>
+  </view>
+
+  <!-- 登录对话框 -->
+  <view class="login-modal" wx:if="{{showLoginDialog}}">
+    <view class="modal-overlay" bindtap="closeLoginDialog"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">🔑 工人登录</text>
+        <text class="close-btn" bindtap="closeLoginDialog">✕</text>
+      </view>
+      
+      <view class="form-section">
+        <view class="input-group">
+          <text class="input-label">工号</text>
+          <input 
+            class="input-field" 
+            type="text" 
+            placeholder="请输入工号" 
+            value="{{loginForm.worker_id}}"
+            bindinput="onWorkerIdInput"
+            maxlength="20"
+          />
+        </view>
+        
+        <view class="input-group">
+          <text class="input-label">密码</text>
+          <input 
+            class="input-field" 
+            type="password" 
+            placeholder="请输入密码" 
+            value="{{loginForm.password}}"
+            bindinput="onPasswordInput"
+            maxlength="50"
+          />
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button 
+          class="modal-btn cancel-btn" 
+          bindtap="closeLoginDialog"
+        >
+          取消
+        </button>
+        <button 
+          class="modal-btn submit-btn {{isLoggingIn ? 'loading' : ''}}" 
+          bindtap="submitLogin"
+          disabled="{{isLoggingIn}}"
+        >
+          {{isLoggingIn ? '登录中...' : '登录'}}
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-section">
+    <view class="section-title">功能设置</view>
+    
+    <view class="menu-list">
+      <!-- 服务器配置 -->
+      <view class="menu-item" bindtap="showServerConfig">
+        <view class="menu-left">
+          <text class="menu-icon">🌐</text>
+          <text class="menu-text">服务器设置</text>
+        </view>
+        <view class="menu-right">
+          <text class="menu-status {{serverConfig.configured ? 'connected' : 'disconnected'}}">
+            {{serverConfig.configured ? '已配置' : '未配置'}}
+          </text>
+          <text class="menu-arrow">></text>
+        </view>
+      </view>
+
+      <!-- 连接测试 -->
+      <view class="menu-item" bindtap="testCurrentConnection">
+        <view class="menu-left">
+          <text class="menu-icon">📡</text>
+          <text class="menu-text">连接测试</text>
+        </view>
+        <view class="menu-right">
+          <text class="menu-status status-{{connectionStatus}}">
+            {{connectionStatus === 'connected' ? '已连接' : 
+              connectionStatus === 'testing' ? '测试中...' : 
+              connectionStatus === 'disconnected' ? '未连接' : '未知'}}
+          </text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 服务器配置对话框 -->
+  <view class="server-modal" wx:if="{{showServerDialog}}">
+    <view class="modal-overlay" bindtap="closeServerDialog"></view>
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">🌐 服务器设置</text>
+        <text class="close-btn" bindtap="closeServerDialog">✕</text>
+      </view>
+      
+      <view class="form-section">
+        <view class="input-group">
+          <text class="input-label">服务器地址</text>
+          <input 
+            class="input-field" 
+            type="text" 
+            placeholder="例: http://192.168.1.100:5000" 
+            value="{{tempServerUrl}}"
+            bindinput="onServerUrlInput"
+          />
+        </view>
+        
+        <view class="help-text">
+          <text>💡 请输入完整的服务器地址，包含 http:// 和端口号</text>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="modal-btn cancel-btn" bindtap="closeServerDialog">取消</button>
+        <button class="modal-btn test-btn" bindtap="testConnection" disabled="{{isTestingConnection}}">
+          {{isTestingConnection ? '测试中...' : '测试连接'}}
+        </button>
+        <button class="modal-btn submit-btn" bindtap="saveServerConfig">保存</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 系统信息 -->
+  <view class="info-section">
+    <view class="section-title">系统信息</view>
+    
+    <view class="info-list">
+      <view class="info-item" bindtap="showSystemInfo">
+        <view class="info-left">
+          <text class="info-icon">📱</text>
+          <text class="info-text">设备信息</text>
+        </view>
+        <text class="info-arrow">></text>
+      </view>
+      
+      <view class="info-item">
+        <view class="info-left">
+          <text class="info-icon">📦</text>
+          <text class="info-text">应用版本</text>
+        </view>
+        <text class="info-value">{{appVersion}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 其他操作 -->
+  <view class="other-section">
+    <view class="section-title">其他操作</view>
+    
+    <view class="other-list">
+      <view class="other-item" bindtap="showConnectionHelp">
+        <text class="other-icon">❓</text>
+        <text class="other-text">连接帮助</text>
+      </view>
+      
+      <view class="other-item" bindtap="submitFeedback">
+        <text class="other-icon">💬</text>
+        <text class="other-text">意见反馈</text>
+      </view>
+      
+      <view class="other-item danger" bindtap="clearAllData">
+        <text class="other-icon">🗑️</text>
+        <text class="other-text">清除数据</text>
+      </view>
+    </view>
+  </view>
+
+</view>

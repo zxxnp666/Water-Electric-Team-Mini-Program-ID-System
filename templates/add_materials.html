@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+
+{% block title %}补充材料 - 水电班仓库管理系统{% endblock %}
+
+{% block page_title %}补充材料{% endblock %}
+
+{% block content %}
+<!-- 操作说明 -->
+<div class="alert alert-info mb-4">
+    <h6 class="alert-heading">
+        <i class="bi bi-info-circle"></i> 补充材料说明
+    </h6>
+    <p class="mb-2">
+        <strong>智能库存合并：</strong>如果补充的材料与现有材料的<strong>名称、规格、单位</strong>完全相同，系统将自动合并库存。
+    </p>
+    <p class="mb-2">
+        <strong>新材料创建：</strong>如果材料信息有任何不同，系统将创建新的材料条目并自动生成条码。
+    </p>
+    <p class="mb-0">
+        <strong>必填字段：</strong>材料名称、规格型号、补充数量为必填项，请确保信息完整准确。
+    </p>
+</div>
+
+<!-- 批量输入区域 -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-plus-circle"></i> 批量补充材料
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">输入方式</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="inputMode" id="manualInput" value="manual" checked>
+                    <label class="btn btn-outline-primary" for="manualInput">
+                        <i class="bi bi-keyboard"></i> 手动输入
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="inputMode" id="textInput" value="text">
+                    <label class="btn btn-outline-primary" for="textInput">
+                        <i class="bi bi-file-text"></i> 文本批量
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">快速操作</label>
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="button" class="btn btn-outline-success" onclick="addMaterialRow()">
+                        <i class="bi bi-plus"></i> 添加一行
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="clearAllRows()">
+                        <i class="bi bi-trash"></i> 清空所有
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 手动输入模式 -->
+        <div id="manualInputArea">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="materialsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="20%">材料名称 <span class="text-danger">*</span></th>
+                            <th width="20%">规格型号 <span class="text-danger">*</span></th>
+                            <th width="10%">单位</th>
+                            <th width="15%">品牌</th>
+                            <th width="15%">补充数量 <span class="text-danger">*</span></th>
+                            <th width="10%">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialsTableBody">
+                        <!-- 初始行将通过JavaScript添加 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 文本批量输入模式 -->
+        <div id="textInputArea" style="display: none;">
+            <div class="row">
+                <div class="col-md-8">
+                    <label class="form-label">批量输入文本</label>
+                    <textarea class="form-control" id="batchTextInput" rows="10" 
+                              placeholder="请按以下格式输入，每行一个材料：
+材料名称|规格型号|单位|品牌|数量
+
+示例：
+螺丝钉|M6*20|个|标准|100
+电线|2.5平方|米|德力西|50
+开关|单控|个|公牛|20"></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">格式说明</label>
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>输入格式：</h6>
+                            <code>名称|规格|单位|品牌|数量</code>
+                            <hr>
+                            <h6>字段说明：</h6>
+                            <ul class="small mb-0">
+                                <li><strong>名称</strong>：必填</li>
+                                <li><strong>规格</strong>：必填</li>
+                                <li><strong>单位</strong>：可选，默认为"个"</li>
+                                <li><strong>品牌</strong>：可选</li>
+                                <li><strong>数量</strong>：必填，必须为正数</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-info w-100 mt-2" onclick="parseBatchText()">
+                        <i class="bi bi-arrow-down"></i> 解析到表格
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 提交按钮 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-secondary" onclick="previewMaterials()">
+                        <i class="bi bi-eye"></i> 预览
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="submitMaterials()">
+                        <i class="bi bi-check-circle"></i> 提交补充
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 预览模态框 -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-eye"></i> 材料补充预览
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <!-- 预览内容将通过JavaScript填充 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-success" onclick="confirmSubmit()">
+                    <i class="bi bi-check-circle"></i> 确认提交
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 结果模态框 -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-clipboard-check"></i> 补充结果
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="resultContent">
+                    <!-- 结果内容将通过JavaScript填充 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise"></i> 刷新页面
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let materialRowCount = 0;
+    
+    // 页面加载时初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 添加初始行
+        addMaterialRow();
+        addMaterialRow();
+        addMaterialRow();
+        
+        // 监听输入模式切换
+        document.querySelectorAll('input[name="inputMode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                toggleInputMode(this.value);
+            });
+        });
+    });
+    
+    // 切换输入模式
+    function toggleInputMode(mode) {
+        const manualArea = document.getElementById('manualInputArea');
+        const textArea = document.getElementById('textInputArea');
+        
+        if (mode === 'manual') {
+            manualArea.style.display = 'block';
+            textArea.style.display = 'none';
+        } else {
+            manualArea.style.display = 'none';
+            textArea.style.display = 'block';
+        }
+    }
+    
+    // 添加材料行
+    function addMaterialRow() {
+        materialRowCount++;
+        const tbody = document.getElementById('materialsTableBody');
+        const row = document.createElement('tr');
+        row.id = `materialRow${materialRowCount}`;
+        
+        row.innerHTML = `
+            <td>
+                <input type="text" class="form-control" name="name" placeholder="输入材料名称" required>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="specification" placeholder="输入规格型号" required>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="unit" placeholder="单位" value="个">
+            </td>
+            <td>
+                <input type="text" class="form-control" name="brand" placeholder="品牌">
+            </td>
+            <td>
+                <input type="number" class="form-control" name="quantity" placeholder="数量" min="1" required>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeMaterialRow(${materialRowCount})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    }
+    
+    // 删除材料行
+    function removeMaterialRow(rowId) {
+        const row = document.getElementById(`materialRow${rowId}`);
+        if (row) {
+            row.remove();
+        }
+        
+        // 如果没有行了，至少保留一行
+        const tbody = document.getElementById('materialsTableBody');
+        if (tbody.children.length === 0) {
+            addMaterialRow();
+        }
+    }
+    
+    // 清空所有行
+    function clearAllRows() {
+        if (confirm('确定要清空所有输入的材料吗？')) {
+            document.getElementById('materialsTableBody').innerHTML = '';
+            materialRowCount = 0;
+            addMaterialRow();
+        }
+    }
+    
+    // 解析批量文本
+    function parseBatchText() {
+        const text = document.getElementById('batchTextInput').value.trim();
+        if (!text) {
+            showAlert('请输入批量文本', 'warning');
+            return;
+        }
+        
+        const lines = text.split('\n');
+        const tbody = document.getElementById('materialsTableBody');
+        
+        // 清空现有行
+        tbody.innerHTML = '';
+        materialRowCount = 0;
+        
+        let validCount = 0;
+        
+        lines.forEach(line => {
+            line = line.trim();
+            if (!line) return;
+            
+            const parts = line.split('|');
+            if (parts.length < 2) {
+                console.warn('跳过格式错误的行:', line);
+                return;
+            }
+            
+            const name = parts[0]?.trim() || '';
+            const specification = parts[1]?.trim() || '';
+            const unit = parts[2]?.trim() || '个';
+            const brand = parts[3]?.trim() || '';
+            const quantity = parseInt(parts[4]?.trim()) || 0;
+            
+            if (!name || !specification || quantity <= 0) {
+                console.warn('跳过无效数据的行:', line);
+                return;
+            }
+            
+            // 添加行并填充数据
+            addMaterialRow();
+            const currentRow = document.getElementById(`materialRow${materialRowCount}`);
+            currentRow.querySelector('input[name="name"]').value = name;
+            currentRow.querySelector('input[name="specification"]').value = specification;
+            currentRow.querySelector('input[name="unit"]').value = unit;
+            currentRow.querySelector('input[name="brand"]').value = brand;
+            currentRow.querySelector('input[name="quantity"]').value = quantity;
+            
+            validCount++;
+        });
+        
+        if (validCount === 0) {
+            addMaterialRow();
+            showAlert('没有解析到有效的材料数据', 'warning');
+        } else {
+            // 切换到手动输入模式显示结果
+            document.getElementById('manualInput').checked = true;
+            toggleInputMode('manual');
+            showAlert(`成功解析 ${validCount} 条材料数据`, 'success');
+        }
+    }
+    
+    // 收集材料数据
+    function collectMaterialsData() {
+        const materials = [];
+        const rows = document.querySelectorAll('#materialsTableBody tr');
+        
+        rows.forEach(row => {
+            const name = row.querySelector('input[name="name"]').value.trim();
+            const specification = row.querySelector('input[name="specification"]').value.trim();
+            const unit = row.querySelector('input[name="unit"]').value.trim() || '个';
+            const brand = row.querySelector('input[name="brand"]').value.trim();
+            const quantity = parseInt(row.querySelector('input[name="quantity"]').value) || 0;
+            
+            if (name && specification && quantity > 0) {
+                materials.push({
+                    name: name,
+                    specification: specification,
+                    unit: unit,
+                    brand: brand,
+                    quantity: quantity
+                });
+            }
+        });
+        
+        return materials;
+    }
+    
+    // 预览材料
+    function previewMaterials() {
+        const materials = collectMaterialsData();
+        
+        if (materials.length === 0) {
+            showAlert('请至少输入一个有效的材料', 'warning');
+            return;
+        }
+        
+        let previewHtml = `
+            <div class="alert alert-info">
+                <h6>即将补充 ${materials.length} 种材料</h6>
+                <p class="mb-0">系统将自动检查是否与现有材料匹配，相同材料将合并库存。</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>材料名称</th>
+                            <th>规格型号</th>
+                            <th>单位</th>
+                            <th>品牌</th>
+                            <th>补充数量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        materials.forEach(material => {
+            previewHtml += `
+                <tr>
+                    <td><strong>${material.name}</strong></td>
+                    <td>${material.specification || '-'}</td>
+                    <td>${material.unit}</td>
+                    <td>${material.brand || '-'}</td>
+                    <td><span class="badge bg-primary">${material.quantity}</span></td>
+                </tr>
+            `;
+        });
+        
+        previewHtml += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        document.getElementById('previewContent').innerHTML = previewHtml;
+        const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+        modal.show();
+    }
+    
+    // 提交材料
+    function submitMaterials() {
+        const materials = collectMaterialsData();
+        
+        if (materials.length === 0) {
+            showAlert('请至少输入一个有效的材料', 'warning');
+            return;
+        }
+        
+        confirmSubmit();
+    }
+    
+    // 确认提交
+    function confirmSubmit() {
+        const materials = collectMaterialsData();
+        
+        // 关闭预览模态框
+        const previewModal = bootstrap.Modal.getInstance(document.getElementById('previewModal'));
+        if (previewModal) previewModal.hide();
+        
+        // 显示加载状态
+        showAlert('正在处理材料补充...', 'info');
+        
+        // 发送请求
+        fetch('/api/add_materials_batch', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                materials: materials
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showResultModal(data);
+            } else {
+                showAlert('补充失败: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('网络错误，请重试', 'error');
+        });
+    }
+    
+    // 显示结果模态框
+    function showResultModal(data) {
+        const summary = data.summary;
+        const results = data.results;
+        
+        let resultHtml = `
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary">${summary.total}</h5>
+                            <p class="card-text">总计材料</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">${summary.success}</h5>
+                            <p class="card-text">处理成功</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">${summary.updated}</h5>
+                            <p class="card-text">库存更新</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">${summary.created}</h5>
+                            <p class="card-text">新建材料</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>材料名称</th>
+                            <th>条码</th>
+                            <th>操作类型</th>
+                            <th>处理结果</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        results.forEach(result => {
+            const statusBadge = result.success ? 
+                '<span class="badge bg-success">成功</span>' : 
+                '<span class="badge bg-danger">失败</span>';
+                
+            const actionBadge = result.action === 'updated' ? 
+                '<span class="badge bg-info">库存更新</span>' : 
+                result.action === 'created' ? 
+                '<span class="badge bg-warning">新建材料</span>' : 
+                '<span class="badge bg-secondary">-</span>';
+            
+            resultHtml += `
+                <tr>
+                    <td><strong>${result.name}</strong></td>
+                    <td><code>${result.barcode || '-'}</code></td>
+                    <td>${actionBadge}</td>
+                    <td>${result.message}</td>
+                    <td>${statusBadge}</td>
+                </tr>
+            `;
+        });
+        
+        resultHtml += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        document.getElementById('resultContent').innerHTML = resultHtml;
+        const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+        modal.show();
+    }
+    
+    // 显示提示消息
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('main');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // 自动消失
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+</script>
+{% endblock %}

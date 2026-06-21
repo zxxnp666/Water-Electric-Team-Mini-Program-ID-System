@@ -1,0 +1,215 @@
+<!--pages/cart/cart.wxml-->
+<view class="main-container">
+  <view class="container">
+
+    <!-- 购物车头部信息 -->
+    <view class="card">
+      <view class="card-header">
+        <view class="card-title">🛒 待出库物资</view>
+        <view class="card-subtitle">确认信息后即可出库</view>
+      </view>
+      
+      <view class="card-body" wx:if="{{cartItems.length > 0}}">
+        <view class="stats-row">
+          <view class="stat-item">
+            <view class="stat-number">{{totalItems}}</view>
+            <view class="stat-label">物资种类</view>
+          </view>
+          <view class="stat-item">
+            <view class="stat-number">{{totalQuantity}}</view>
+            <view class="stat-label">总数量</view>
+          </view>
+          <view class="stat-item">
+            <view class="stat-number">{{cartItems.length > 0 ? '准备就绪' : '待添加'}}</view>
+            <view class="stat-label">状态</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 领用人信息 -->
+    <view class="card" wx:if="{{cartItems.length > 0}}">
+      <view class="card-body">
+        <view class="form-group">
+          <view class="form-label">👤 领用人姓名</view>
+          <input class="form-input" 
+                 placeholder="请输入领用人姓名"
+                 value="{{userName}}"
+                 bindinput="onUserNameInput"
+                 confirm-type="done" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 购物车操作栏 -->
+    <view class="card" wx:if="{{cartItems.length > 0}}">
+      <view class="card-body">
+        <view class="flex align-center justify-between">
+          <view class="flex align-center" style="gap: 16rpx;">
+            <view class="btn btn-outline btn-small" bindtap="toggleSelectMode">
+              {{selectMode ? '退出选择' : '批量选择'}}
+            </view>
+            <view class="btn btn-outline btn-small" 
+                  wx:if="{{selectMode}}" 
+                  bindtap="toggleSelectAll">
+              {{selectedItems.length === cartItems.length ? '取消全选' : '全选'}}
+            </view>
+          </view>
+          
+          <view class="flex align-center" style="gap: 16rpx;">
+            <view class="btn btn-error btn-small" 
+                  wx:if="{{selectMode && selectedItems.length > 0}}"
+                  bindtap="removeSelectedItems">
+              删除选中
+            </view>
+            <view class="btn btn-warning btn-small" bindtap="clearCart">
+              清空
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 购物车物资列表 -->
+    <view class="cart-list" wx:if="{{cartItems.length > 0}}">
+      <view class="cart-item {{selectMode ? 'select-mode' : ''}}" 
+            wx:for="{{cartItems}}" 
+            wx:key="barcode">
+        
+        <!-- 选择框 -->
+        <view class="select-checkbox" 
+              wx:if="{{selectMode}}"
+              bindtap="toggleItemSelection"
+              data-index="{{index}}">
+          <view class="checkbox {{item.selected ? 'checked' : ''}}">
+            ✓
+          </view>
+        </view>
+
+        <!-- 物资信息 -->
+        <view class="cart-item-info" bindtap="viewMaterialDetail" data-index="{{index}}">
+          <view class="item-icon">📦</view>
+          <view class="item-details">
+            <view class="item-name">{{item.name}}</view>
+            <view class="item-spec">{{item.specification}}</view>
+            <view class="item-stock">库存: {{item.stock}}{{item.unit}}</view>
+            <view class="item-barcode">条码: {{item.barcode}}</view>
+          </view>
+        </view>
+
+        <!-- 数量控制 -->
+        <view class="quantity-controls" wx:if="{{!selectMode}}">
+          <view class="quantity-btn" 
+                bindtap="adjustQuantity" 
+                data-index="{{index}}" 
+                data-operation="decrease">
+            -
+          </view>
+          
+          <input class="quantity-input" 
+                 type="number"
+                 value="{{item.quantity}}"
+                 data-index="{{index}}"
+                 bindblur="updateQuantity"
+                 maxlength="3" />
+          
+          <view class="quantity-btn" 
+                bindtap="adjustQuantity" 
+                data-index="{{index}}" 
+                data-operation="increase">
+            +
+          </view>
+          
+          <view class="unit-label">{{item.unit}}</view>
+        </view>
+
+        <!-- 移除按钮 -->
+        <view class="remove-item-btn" 
+              wx:if="{{!selectMode}}"
+              bindtap="removeItem" 
+              data-index="{{index}}">
+          🗑️
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部操作区 -->
+    <view class="bottom-actions" wx:if="{{cartItems.length > 0}}">
+      <view class="action-summary">
+        <view class="summary-text">
+          共 {{totalItems}} 种物资，{{totalQuantity}} 件
+        </view>
+        <view class="summary-user" wx:if="{{userName}}">
+          <text class="user-icon">👤</text>
+          <text class="user-text">{{userName}}</text>
+        </view>
+      </view>
+      
+      <view class="action-buttons">
+        <view class="btn btn-outline flex-1" bindtap="continueScan">
+          <text class="icon">📷</text>继续扫码
+        </view>
+        <view class="btn btn-success flex-1" 
+              bindtap="confirmCheckout"
+              disabled="{{isSubmitting}}">
+          <text class="icon">{{isSubmitting ? '🔄' : '✅'}}</text>
+          {{isSubmitting ? '出库中...' : '确认出库'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 空购物车状态 -->
+    <view class="empty-cart" wx:if="{{cartItems.length === 0}}">
+      <view class="empty-icon">🛒</view>
+      <view class="empty-text">购物车为空</view>
+      <view class="empty-subtext">扫描条形码添加物资到待出库列表</view>
+      <view class="btn btn-primary mt-32" bindtap="continueScan">
+        <text class="icon">📷</text>开始扫码
+      </view>
+    </view>
+
+  </view>
+
+  <!-- 确认出库对话框 -->
+  <view class="modal-overlay" wx:if="{{showConfirmDialog}}" bindtap="closeConfirmDialog">
+    <view class="modal-content" catchtap="">
+      <view class="modal-header">
+        <view class="modal-title">🔍 确认出库信息</view>
+      </view>
+      
+      <view class="modal-body">
+        <view class="confirm-section">
+          <view class="confirm-label">👤 领用人</view>
+          <view class="confirm-value">{{confirmData.user}}</view>
+        </view>
+        
+        <view class="confirm-section">
+          <view class="confirm-label">📦 物资概要</view>
+          <view class="confirm-value">{{confirmData.totalItems}}种物资，共{{confirmData.totalQuantity}}件</view>
+        </view>
+        
+        <view class="confirm-section">
+          <view class="confirm-label">🕐 出库时间</view>
+          <view class="confirm-value">{{confirmData.time}}</view>
+        </view>
+        
+        <view class="confirm-materials">
+          <view class="confirm-material" wx:for="{{confirmData.items}}" wx:key="barcode">
+            <view class="material-name">{{item.name}}</view>
+            <view class="material-quantity">{{item.quantity}}{{item.unit}}</view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <view class="btn btn-outline flex-1" bindtap="closeConfirmDialog">
+          取消
+        </view>
+        <view class="btn btn-success flex-1" bindtap="executeCheckout">
+          <text class="icon">✅</text>确认出库
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}水电班仓库管理系统 - 管理员端{% endblock %}</title>
+    
+    <!-- 优先使用CDN，失败时使用本地样式 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" 
+          onerror="this.onerror=null;this.href='{{ url_for('static', filename='css/bootstrap.min.css') }}';">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet"
+          onerror="this.onerror=null;this.href='{{ url_for('static', filename='css/bootstrap-icons.css') }}';">
+    
+    <!-- 本地样式文件 -->
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin: 0.2rem 0;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateX(5px);
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stats-card-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .stats-card-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .stats-card-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        .btn-custom {
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+        }
+        .low-stock {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .normal-stock {
+            background-color: #d1edff;
+            color: #0c5460;
+        }
+        .high-stock {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4><i class="bi bi-building"></i> 仓库管理</h4>
+                        {% if session.admin_name %}
+                        <p class="mb-0">欢迎，{{ session.admin_name }}</p>
+                        <small class="text-muted">{{ session.admin_position }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                                <i class="bi bi-speedometer2"></i> 仪表板
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'materials' %}active{% endif %}" href="{{ url_for('materials') }}">
+                                <i class="bi bi-box-seam"></i> 材料管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'add_materials' %}active{% endif %}" href="{{ url_for('add_materials') }}">
+                                <i class="bi bi-plus-circle-fill"></i> 补充材料
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'records' %}active{% endif %}" href="{{ url_for('records') }}">
+                                <i class="bi bi-journal-text"></i> 记录管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'workers' %}active{% endif %}" href="{{ url_for('workers') }}">
+                                <i class="bi bi-people"></i> 工人管理
+                            </a>
+                        </li>
+                        <li class="nav-item mt-3">
+                            <a class="nav-link text-warning" href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right"></i> 退出登录
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- 主内容区 -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">{% block page_title %}仪表板{% endblock %}</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <span class="text-muted current-time">
+                                <i class="bi bi-clock"></i> 
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flash消息 -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- 页面内容 -->
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- 优先使用CDN，失败时使用本地JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" 
+            onerror="this.onerror=null;var script=document.createElement('script');script.src='{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}';document.head.appendChild(script);"></script>
+    
+    <!-- 本地JavaScript文件 -->
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    
+    <script>
+        // 兼容性检查和初始化
+        (function() {
+            'use strict';
+            
+            // 检查基本功能
+            if (!document.querySelector || !document.addEventListener) {
+                console.warn('浏览器版本过旧，可能影响使用体验');
+                return;
+            }
+            
+            // 页面加载完成后执行
+            function initPage() {
+                // 更新时间显示（不依赖moment.js）
+                if (window.AdminUtils) {
+                    AdminUtils.updateCurrentTime();
+                    setInterval(function() {
+                        AdminUtils.updateCurrentTime();
+                    }, 1000);
+                }
+                
+                // 自动隐藏alert
+                setTimeout(function() {
+                    var alerts = document.querySelectorAll('.alert');
+                    for (var i = 0; i < alerts.length; i++) {
+                        alerts[i].style.display = 'none';
+                    }
+                }, 5000);
+            }
+            
+            // 确保DOM加载完成
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPage);
+            } else {
+                initPage();
+            }
+        })();
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

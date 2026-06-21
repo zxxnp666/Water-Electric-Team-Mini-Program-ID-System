@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}材料管理 - 水电班仓库管理系统{% endblock %}
+
+{% block page_title %}材料管理{% endblock %}
+
+{% block content %}
+<!-- 搜索和筛选 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" name="search" 
+                           value="{{ search }}" placeholder="搜索材料名称、条码或规格...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary btn-custom">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+                <a href="{{ url_for('materials') }}" class="btn btn-outline-secondary btn-custom">
+                    <i class="bi bi-arrow-clockwise"></i> 重置
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 材料列表 -->
+<div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-box-seam"></i> 材料列表
+        </h5>
+        <span class="badge bg-light text-dark">共 {{ total }} 项材料</span>
+    </div>
+    <div class="card-body p-0">
+        {% if materials %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>条码</th>
+                        <th>材料名称</th>
+                        <th>规格</th>
+                        <th>单位</th>
+                        <th>当前库存</th>
+                        <th>品牌</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for material in materials %}
+                    <tr>
+                        <td>
+                            <code>{{ material.barcode }}</code>
+                        </td>
+                        <td>
+                            <span class="editable-field" 
+                                  data-field="name" 
+                                  data-barcode="{{ material.barcode }}"
+                                  data-type="text"
+                                  title="双击编辑材料名称">
+                                <strong>{{ material.name }}</strong>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="editable-field" 
+                                  data-field="specification" 
+                                  data-barcode="{{ material.barcode }}"
+                                  data-type="text"
+                                  title="双击编辑规格型号">
+                                {{ material.specification or '-' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="editable-field" 
+                                  data-field="unit" 
+                                  data-barcode="{{ material.barcode }}"
+                                  data-type="text"
+                                  title="双击编辑单位">
+                                {{ material.unit }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="editable-field" 
+                                  data-field="stock" 
+                                  data-barcode="{{ material.barcode }}"
+                                  data-type="number"
+                                  title="双击编辑库存数量">
+                                {{ material.stock }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="editable-field" 
+                                  data-field="brand" 
+                                  data-barcode="{{ material.barcode }}"
+                                  data-type="text"
+                                  title="双击编辑品牌">
+                                {{ material.brand or '-' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if material.stock < 10 %}
+                                <span class="status-badge low-stock">
+                                    <i class="bi bi-exclamation-triangle"></i> 库存不足
+                                </span>
+                            {% elif material.stock < 50 %}
+                                <span class="status-badge normal-stock">
+                                    <i class="bi bi-info-circle"></i> 正常
+                                </span>
+                            {% else %}
+                                <span class="status-badge high-stock">
+                                    <i class="bi bi-check-circle"></i> 充足
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-info" 
+                                        onclick="showMaterialInfo('{{ material.barcode }}')"
+                                        title="查看详情">
+                                    <i class="bi bi-info-circle"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteMaterial('{{ material.barcode }}', '{{ material.name }}')"
+                                        title="删除材料">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <h5 class="text-muted mt-3">没有找到材料</h5>
+            <p class="text-muted">请尝试调整搜索条件</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- 分页 -->
+    {% if total_pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="材料列表分页">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('materials', search=search, page=page-1) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ p }}</span>
+                    </li>
+                    {% elif p <= 3 or p >= total_pages - 2 or (p >= page - 1 and p <= page + 1) %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('materials', search=search, page=p) }}">{{ p }}</a>
+                    </li>
+                    {% elif p == 4 or p == total_pages - 3 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('materials', search=search, page=page+1) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 双击编辑功能
+    document.querySelectorAll('.editable-field').forEach(field => {
+        // 添加样式提示
+        field.style.cursor = 'pointer';
+        field.style.borderBottom = '1px dashed #ccc';
+        
+        field.addEventListener('dblclick', function() {
+            if (this.querySelector('input')) return; // 已经在编辑状态
+            
+            const currentValue = this.textContent.trim();
+            const fieldType = this.dataset.type;
+            const barcode = this.dataset.barcode;
+            const fieldName = this.dataset.field;
+            
+            // 保存原始值
+            this.dataset.originalValue = currentValue;
+            
+            // 创建输入框
+            const input = document.createElement('input');
+            input.type = fieldType === 'number' ? 'number' : 'text';
+            input.value = currentValue === '-' ? '' : currentValue;
+            input.className = 'form-control form-control-sm';
+            input.style.width = fieldName === 'name' ? '150px' : fieldName === 'specification' ? '200px' : '100px';
+            
+            // 如果是材料名称，移除strong标签的内容
+            if (fieldName === 'name') {
+                const strongElement = this.querySelector('strong');
+                if (strongElement) {
+                    input.value = strongElement.textContent.trim();
+                }
+            }
+            
+            // 替换内容
+            this.innerHTML = '';
+            this.appendChild(input);
+            input.focus();
+            input.select();
+            
+            // 保存函数
+            const saveValue = () => {
+                const newValue = input.value.trim();
+                const originalValue = currentValue === '-' ? '' : currentValue;
+                
+                if (newValue !== originalValue) {
+                    updateMaterial(barcode, fieldName, newValue, this);
+                } else {
+                    restoreOriginalValue(this, currentValue, fieldName);
+                }
+            };
+            
+            // 取消编辑函数
+            const cancelEdit = () => {
+                restoreOriginalValue(this, currentValue, fieldName);
+            };
+            
+            // 事件监听
+            input.addEventListener('blur', saveValue);
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    saveValue();
+                }
+            });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    cancelEdit();
+                }
+            });
+        });
+    });
+    
+    // 恢复原始值
+    function restoreOriginalValue(element, value, fieldName) {
+        if (fieldName === 'name') {
+            element.innerHTML = '<strong>' + value + '</strong>';
+        } else {
+            element.textContent = value || '-';
+        }
+    }
+    
+    // 更新材料信息
+    function updateMaterial(barcode, field, value, element) {
+        // 显示加载状态
+        element.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+        
+        fetch('/api/update_material', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                barcode: barcode,
+                field: field,
+                value: value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 根据字段类型恢复显示
+                if (field === 'name') {
+                    element.innerHTML = '<strong>' + value + '</strong>';
+                } else {
+                    element.textContent = value || '-';
+                }
+                showAlert('更新成功', 'success');
+                
+                // 如果更新的是库存，重新计算状态
+                if (field === 'stock') {
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } else {
+                restoreOriginalValue(element, element.dataset.originalValue, field);
+                showAlert('更新失败: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            restoreOriginalValue(element, element.dataset.originalValue, field);
+            showAlert('网络错误', 'error');
+        });
+    }
+    
+    // 删除材料
+    function deleteMaterial(barcode, name) {
+        if (!confirm(`确定要删除材料 "${name}" (${barcode}) 吗？\n\n注意：删除后无法恢复！`)) {
+            return;
+        }
+        
+        // 显示加载状态
+        const deleteBtn = event.target.closest('button');
+        const originalHtml = deleteBtn.innerHTML;
+        deleteBtn.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+        deleteBtn.disabled = true;
+        
+        fetch('/api/delete_material', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                barcode: barcode
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('材料删除成功', 'success');
+                // 移除表格行
+                const row = deleteBtn.closest('tr');
+                row.style.transition = 'opacity 0.3s';
+                row.style.opacity = '0';
+                setTimeout(() => {
+                    row.remove();
+                    // 如果页面没有材料了，刷新页面
+                    if (document.querySelectorAll('tbody tr').length === 0) {
+                        location.reload();
+                    }
+                }, 300);
+            } else {
+                showAlert('删除失败: ' + data.message, 'error');
+                deleteBtn.innerHTML = originalHtml;
+                deleteBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('网络错误', 'error');
+            deleteBtn.innerHTML = originalHtml;
+            deleteBtn.disabled = false;
+        });
+    }
+    
+    // 显示材料详细信息
+    function showMaterialInfo(barcode) {
+        showAlert('双击任意字段可直接编辑材料信息', 'info');
+    }
+    
+    // 显示提示消息
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type === 'info' ? 'info' : 'success'} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('main');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, type === 'info' ? 2000 : 3000);
+    }
+    
+    // 页面加载完成后显示使用提示
+    document.addEventListener('DOMContentLoaded', function() {
+        // 添加使用提示
+        const helpDiv = document.createElement('div');
+        helpDiv.className = 'alert alert-info alert-dismissible fade show';
+        helpDiv.innerHTML = `
+            <i class="bi bi-lightbulb"></i> 
+            <strong>使用提示：</strong>双击任意字段可直接编辑材料信息，点击删除按钮可删除材料
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const firstCard = document.querySelector('.card');
+        if (firstCard) {
+            firstCard.parentNode.insertBefore(helpDiv, firstCard);
+        }
+        
+        // 5秒后自动隐藏提示
+        setTimeout(() => {
+            helpDiv.remove();
+        }, 5000);
+    });
+</script>
+{% endblock %}

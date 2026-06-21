@@ -1,0 +1,536 @@
+/* pages/settings/settings.wxss */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20rpx;
+}
+
+/* 登录状态卡片 */
+.status-section {
+  margin-bottom: 30rpx;
+}
+
+.status-card {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.status-card.logged-in {
+  border-left: 8rpx solid #4CAF50;
+}
+
+.status-card.logged-out {
+  border-left: 8rpx solid #FF9800;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.status-icon {
+  font-size: 40rpx;
+  margin-right: 15rpx;
+}
+
+.status-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 服务器状态指示器 */
+.server-indicator {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  font-size: 24rpx;
+}
+
+.indicator-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  margin-right: 8rpx;
+  display: inline-block;
+}
+
+.indicator-dot.connected {
+  background: #4CAF50;
+  box-shadow: 0 0 8rpx rgba(76, 175, 80, 0.5);
+}
+
+.indicator-dot.disconnected {
+  background: #f44336;
+  box-shadow: 0 0 8rpx rgba(244, 67, 54, 0.5);
+}
+
+.indicator-dot.unconfigured {
+  background: #FF9800;
+  box-shadow: 0 0 8rpx rgba(255, 152, 0, 0.5);
+}
+
+.indicator-text {
+  color: #666;
+  font-size: 22rpx;
+}
+
+.worker-info {
+  margin-top: 20rpx;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15rpx;
+  padding: 10rpx 0;
+}
+
+.info-row .label {
+  font-size: 28rpx;
+  color: #666;
+  width: 120rpx;
+  flex-shrink: 0;
+}
+
+.info-row .value {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 30rpx 0;
+}
+
+.prompt-text {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+/* 服务器配置提示 */
+.config-hint {
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: linear-gradient(135deg, #fff3e0, #ffecb3);
+  border-radius: 15rpx;
+  border-left: 4rpx solid #FF9800;
+  text-align: center;
+}
+
+.hint-text {
+  display: block;
+  font-size: 26rpx;
+  color: #e65100;
+  margin-bottom: 15rpx;
+  font-weight: 500;
+}
+
+.quick-config-btn {
+  padding: 15rpx 30rpx;
+  background: linear-gradient(45deg, #FF9800, #F57C00);
+  color: white;
+  border: none;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+  font-weight: bold;
+  box-shadow: 0 4rpx 12rpx rgba(255, 152, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.quick-config-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 2rpx 8rpx rgba(255, 152, 0, 0.4);
+}
+
+/* 操作按钮 */
+.action-section {
+  margin-bottom: 30rpx;
+}
+
+.action-btn {
+  width: 100%;
+  height: 88rpx;
+  border-radius: 20rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 6rpx 15rpx rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.login-btn {
+  background: linear-gradient(45deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.logout-btn {
+  background: linear-gradient(45deg, #f44336, #d32f2f);
+  color: white;
+}
+
+.action-btn:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 4rpx 10rpx rgba(0,0,0,0.15);
+}
+
+/* 登录对话框 */
+.login-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600rpx;
+  background: white;
+  border-radius: 25rpx;
+  overflow: hidden;
+  box-shadow: 0 20rpx 60rpx rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.close-btn {
+  font-size: 36rpx;
+  padding: 10rpx;
+  cursor: pointer;
+}
+
+.form-section {
+  padding: 30rpx;
+}
+
+.input-group {
+  margin-bottom: 30rpx;
+}
+
+.input-label {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 15rpx;
+  font-weight: 500;
+}
+
+.input-field {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 15rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.input-field:focus {
+  border-color: #667eea;
+  outline: none;
+}
+
+.modal-footer {
+  display: flex;
+  padding: 20rpx 30rpx 30rpx;
+  gap: 20rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 70rpx;
+  border: none;
+  border-radius: 15rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.submit-btn {
+  background: linear-gradient(45deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.test-btn {
+  background: linear-gradient(45deg, #2196F3, #1976D2);
+  color: white;
+}
+
+.modal-btn:active {
+  transform: scale(0.98);
+}
+
+.modal-btn.loading {
+  opacity: 0.7;
+}
+
+/* 功能菜单 */
+.menu-section {
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 20rpx;
+  padding-left: 10rpx;
+}
+
+.menu-list {
+  background: white;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.1);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  transition: background-color 0.3s ease;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:active {
+  background: #f8f8f8;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+}
+
+.menu-icon {
+  font-size: 36rpx;
+  margin-right: 20rpx;
+}
+
+.menu-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.menu-right {
+  display: flex;
+  align-items: center;
+}
+
+.menu-status {
+  font-size: 24rpx;
+  margin-right: 10rpx;
+}
+
+.menu-status.connected {
+  color: #4CAF50;
+}
+
+.menu-status.disconnected {
+  color: #f44336;
+}
+
+.status-connected {
+  color: #4CAF50;
+}
+
+.status-testing {
+  color: #FF9800;
+}
+
+.status-disconnected {
+  color: #f44336;
+}
+
+.status-unknown {
+  color: #999;
+}
+
+.menu-arrow {
+  font-size: 24rpx;
+  color: #ccc;
+}
+
+/* 服务器配置对话框 */
+.server-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+}
+
+.help-text {
+  margin-top: 15rpx;
+  padding: 15rpx;
+  background: #f8f9fa;
+  border-radius: 10rpx;
+  border-left: 4rpx solid #2196F3;
+}
+
+.help-text text {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* 系统信息 */
+.info-section {
+  margin-bottom: 30rpx;
+}
+
+.info-list {
+  background: white;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.1);
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  transition: background-color 0.3s ease;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item:active {
+  background: #f8f8f8;
+}
+
+.info-left {
+  display: flex;
+  align-items: center;
+}
+
+.info-icon {
+  font-size: 36rpx;
+  margin-right: 20rpx;
+}
+
+.info-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.info-value {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.info-arrow {
+  font-size: 24rpx;
+  color: #ccc;
+}
+
+/* 其他操作 */
+.other-section {
+  margin-bottom: 50rpx;
+}
+
+.other-list {
+  background: white;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.1);
+}
+
+.other-item {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+  transition: background-color 0.3s ease;
+}
+
+.other-item:last-child {
+  border-bottom: none;
+}
+
+.other-item:active {
+  background: #f8f8f8;
+}
+
+.other-item.danger:active {
+  background: #ffebee;
+}
+
+.other-icon {
+  font-size: 36rpx;
+  margin-right: 20rpx;
+}
+
+.other-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.other-item.danger .other-text {
+  color: #f44336;
+}
+
+/* 响应式调整 */
+@media (max-width: 350px) {
+  .modal-content {
+    width: 90%;
+  }
+  
+  .container {
+    padding: 15rpx;
+  }
+  
+  .status-card, .menu-item, .info-item, .other-item {
+    padding: 25rpx;
+  }
+}

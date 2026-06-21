@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "物资查询",
+  "enablePullDownRefresh": true,
+  "onReachBottomDistance": 50,
+  "backgroundTextStyle": "dark"
+}

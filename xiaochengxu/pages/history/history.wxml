@@ -1,0 +1,252 @@
+<!--pages/history/history.wxml-->
+<view class="main-container">
+  <view class="container">
+
+    <!-- 页面头部 -->
+    <view class="card">
+      <view class="card-header">
+        <view class="card-title">📊 出库历史记录</view>
+        <view class="card-subtitle" wx:if="{{canViewAllRecords}}">查看所有出库记录</view>
+        <view class="card-subtitle" wx:else>查看我的出库记录</view>
+      </view>
+    </view>
+
+    <!-- 筛选条件 -->
+    <view class="card">
+      <view class="card-body">
+        <view class="date-filter-section">
+          <view class="filter-label">日期范围筛选</view>
+          <view class="date-picker-row">
+            <view class="date-picker-item">
+              <picker mode="date" value="{{startDate}}" bindchange="onStartDateChange">
+                <view class="date-picker-text">{{startDate || '开始日期'}}</view>
+              </picker>
+            </view>
+            <view class="date-separator">至</view>
+            <view class="date-picker-item">
+              <picker mode="date" value="{{endDate}}" bindchange="onEndDateChange">
+                <view class="date-picker-text">{{endDate || '结束日期'}}</view>
+              </picker>
+            </view>
+          </view>
+          <view class="filter-actions">
+            <view class="btn btn-outline" bindtap="clearDateFilter">清空</view>
+            <view class="btn btn-primary" bindtap="applyFilters">筛选</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 统计信息 -->
+    <view class="card" wx:if="{{historyStats}}">
+      <view class="card-body">
+        <view class="stats-row">
+          <view class="stat-item">
+            <view class="stat-number">{{historyStats.totalRecords}}</view>
+            <view class="stat-label">总记录数</view>
+          </view>
+          <view class="stat-item">
+            <view class="stat-number">{{historyStats.totalItems}}</view>
+            <view class="stat-label">总物资数</view>
+          </view>
+          <view class="stat-item">
+            <view class="stat-number">{{historyStats.totalQuantity}}</view>
+            <view class="stat-label">总数量</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 历史记录列表 -->
+    <view class="history-list" wx:if="{{historyList.length > 0}}">
+      <view class="history-item" 
+            wx:for="{{historyList}}" 
+            wx:key="id">
+        
+        <view class="record-header">
+          <view class="record-info">
+            <view class="record-title">出库记录 #{{item.id}}</view>
+            <view class="record-time">{{item.time}}</view>
+          </view>
+          <view class="record-status" 
+                style="color: {{item.status === '处理完成' ? '#34c759' : item.status === '无法处理' ? '#ff3b30' : item.status === '已取消' ? '#8e8e93' : '#ff9500'}}">
+            {{item.status || '处理中'}}
+          </view>
+        </view>
+        
+        <view class="record-details">
+          <view class="detail-row">
+            <view class="detail-label">👤 领用人</view>
+            <view class="detail-value">{{item.user}}</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">📦 物资种类</view>
+            <view class="detail-value">{{item.itemCount}}种</view>
+          </view>
+          <view class="detail-row">
+            <view class="detail-label">📊 总数量</view>
+            <view class="detail-value">{{item.totalQuantity}}件</view>
+          </view>
+        </view>
+        
+        <view class="record-materials">
+          <view class="material-summary">
+            <text wx:for="{{item.materials}}" wx:key="barcode" wx:for-item="material">
+              {{material.name}}({{material.quantity}}{{material.unit}})
+              <text wx:if="{{index < item.materials.length - 1}}">, </text>
+            </text>
+          </view>
+        </view>
+        
+        <view class="record-actions">
+          <view class="action-btn" bindtap="viewRecordDetail" data-record="{{item}}">
+            <text class="icon">👁️</text>查看详情
+          </view>
+          <view class="action-btn" bindtap="exportRecord" data-record="{{item}}">
+            <text class="icon">📤</text>导出
+          </view>
+          <!-- 管理员状态管理按钮 -->
+          <view class="action-btn status-btn" wx:if="{{canManageStatus}}" 
+                catchtap="showStatusManager" data-record="{{item}}">
+            <text class="icon">⚙️</text>状态管理
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{hasMore && historyList.length > 0}}">
+      <view class="btn btn-outline" bindtap="loadMore">
+        <text class="icon">📄</text>加载更多
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{historyList.length === 0 && !isLoading}}">
+      <view class="empty-icon">📊</view>
+      <view class="empty-text">暂无历史记录</view>
+      <view class="empty-subtext">出库记录将显示在这里</view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading" wx:if="{{isLoading}}">
+      <text>🔄 加载中...</text>
+    </view>
+
+  </view>
+
+  <!-- 记录详情弹窗 -->
+  <view class="modal-overlay" wx:if="{{showDetailModal}}" bindtap="closeDetailModal">
+    <view class="modal-content" catchtap="">
+      <view class="modal-header">
+        <view class="modal-title">📋 出库记录详情</view>
+        <view class="modal-close" bindtap="closeDetailModal">✕</view>
+      </view>
+      
+      <view class="modal-body" wx:if="{{selectedRecord}}">
+        <view class="detail-section">
+          <view class="detail-title">基本信息</view>
+          <view class="detail-info">
+            <view class="info-row">
+              <view class="info-label">记录编号</view>
+              <view class="info-value">#{{selectedRecord.id}}</view>
+            </view>
+            <view class="info-row">
+              <view class="info-label">出库时间</view>
+              <view class="info-value">{{selectedRecord.time}}</view>
+            </view>
+            <view class="info-row">
+              <view class="info-label">领用人</view>
+              <view class="info-value">{{selectedRecord.user}}</view>
+            </view>
+            <view class="info-row">
+              <view class="info-label">状态</view>
+              <view class="info-value" 
+                    style="color: {{selectedRecord.status === '处理完成' ? '#34c759' : selectedRecord.status === '无法处理' ? '#ff3b30' : selectedRecord.status === '已取消' ? '#8e8e93' : '#ff9500'}}; font-weight: bold;">
+                {{selectedRecord.status || '处理中'}}
+              </view>
+            </view>
+          </view>
+        </view>
+        
+        <view class="detail-section">
+          <view class="detail-title">物资清单</view>
+          <view class="materials-detail">
+            <view class="material-item" wx:for="{{selectedRecord.materials}}" wx:key="barcode">
+              <view class="material-info">
+                <view class="material-name">{{item.name}}</view>
+                <view class="material-spec">{{item.specification}}</view>
+                <view class="material-barcode">条码: {{item.barcode}}</view>
+              </view>
+              <view class="material-quantity">
+                <view class="quantity-number">{{item.quantity}}</view>
+                <view class="quantity-unit">{{item.unit}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <view class="btn btn-outline flex-1" bindtap="closeDetailModal">
+          关闭
+        </view>
+        <view class="btn btn-primary flex-1" bindtap="exportRecord" data-record="{{selectedRecord}}">
+          <text class="icon">📤</text>导出记录
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 状态管理对话框 -->
+  <view class="modal-overlay" wx:if="{{showStatusModal}}" bindtap="closeStatusModal">
+    <view class="modal-content" catchtap="">
+      <view class="modal-header">
+        <view class="modal-title">状态管理</view>
+        <view class="modal-close" bindtap="closeStatusModal">×</view>
+      </view>
+      
+      <view class="modal-body">
+        <view class="status-info">
+          <view class="info-row">
+            <view class="info-label">记录编号:</view>
+            <view class="info-value">#{{selectedRecord.id}}</view>
+          </view>
+          <view class="info-row">
+            <view class="info-label">领用人:</view>
+            <view class="info-value">{{selectedRecord.user}}</view>
+          </view>
+          <view class="info-row">
+            <view class="info-label">出库时间:</view>
+            <view class="info-value">{{selectedRecord.time}}</view>
+          </view>
+          <view class="info-row">
+            <view class="info-label">当前状态:</view>
+            <view class="info-value status-current">{{selectedRecord.status || '处理中'}}</view>
+          </view>
+        </view>
+        
+        <view class="status-options">
+          <view class="status-title">选择新状态:</view>
+          <view class="status-buttons">
+            <view class="status-option" 
+                  wx:for="{{statusOptions}}" 
+                  wx:key="value"
+                  style="border-color: {{item.color}}; color: {{item.color}}"
+                  bindtap="updateRecordStatus" 
+                  data-status="{{item.value}}"
+                  catchtap="">
+              {{item.label}}
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <view class="btn btn-outline flex-1" bindtap="closeStatusModal">
+          关闭
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

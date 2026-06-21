@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>管理员登录 - 水电班仓库管理系统</title>
+    
+    <!-- 优先使用CDN，失败时使用本地样式 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" 
+          onerror="this.onerror=null;this.href='{{ url_for('static', filename='css/bootstrap.min.css') }}';">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet"
+          onerror="this.onerror=null;this.href='{{ url_for('static', filename='css/bootstrap-icons.css') }}';">
+    
+    <!-- 本地样式文件 -->
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+    
+    <!-- 内联关键样式，确保基本显示 -->
+    <style>
+        /* 关键样式内联，确保在所有浏览器中正常显示 */
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -15px;
+        }
+        
+        .col-md-6 {
+            flex: 0 0 50%;
+            max-width: 50%;
+            padding: 0 15px;
+        }
+        
+        .col-lg-4 {
+            flex: 0 0 33.333333%;
+            max-width: 33.333333%;
+        }
+        
+        .justify-content-center {
+            justify-content: center;
+        }
+        
+        .card {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,.125);
+            border-radius: 0.25rem;
+        }
+        
+        .card-header {
+            padding: 0.75rem 1.25rem;
+            background-color: rgba(0,0,0,.03);
+            border-bottom: 1px solid rgba(0,0,0,.125);
+        }
+        
+        .card-body {
+            padding: 1.25rem;
+        }
+        
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.375rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            margin-bottom: 0;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.42857143;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            color: #fff;
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .w-100 {
+            width: 100%;
+        }
+        
+        .mb-3 {
+            margin-bottom: 1rem;
+        }
+        
+        .mb-4 {
+            margin-bottom: 1.5rem;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-muted {
+            color: #6c757d;
+        }
+        
+        .text-white {
+            color: #fff;
+        }
+        
+        .mt-3 {
+            margin-top: 1rem;
+        }
+        
+        .mt-4 {
+            margin-top: 1.5rem;
+        }
+        
+        .alert {
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+        }
+        
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        @media (max-width: 768px) {
+            .col-md-6, .col-lg-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="login-body">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card login-card">
+                    <div class="card-header login-header text-center py-4">
+                        <h3 class="mb-0">
+                            <span class="bi bi-shield-lock" aria-hidden="true">🔒</span> 管理员登录
+                        </h3>
+                        <p class="mb-0 mt-2">水电班仓库管理系统</p>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Flash消息 -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="worker_id" class="form-label">管理员工号</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <span class="bi bi-person" aria-hidden="true">👤</span>
+                                    </span>
+                                    <input type="text" class="form-control" id="worker_id" name="worker_id" 
+                                           placeholder="请输入管理员工号" required>
+                                </div>
+                                <small class="form-text text-muted">
+                                    系统管理员: ADMIN，仓库管理员: WH001
+                                </small>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label">密码</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <span class="bi bi-lock" aria-hidden="true">🔐</span>
+                                    </span>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="请输入密码" required>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-login w-100">
+                                <span class="bi bi-box-arrow-in-right" aria-hidden="true">🔑</span> 登录
+                            </button>
+                        </form>
+                        
+                        <div class="text-center mt-4">
+                            <small class="text-muted">
+                                <span class="bi bi-info-circle" aria-hidden="true">ℹ️</span> 
+                                仅限系统管理员和仓库管理员使用
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-3">
+                    <small class="text-white">
+                        © 2025 水电班仓库管理系统 v2.0
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 优先使用CDN，失败时使用本地JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" 
+            onerror="this.onerror=null;var script=document.createElement('script');script.src='{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}';document.head.appendChild(script);"></script>
+    
+    <!-- 本地JavaScript文件 -->
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    
+    <script>
+        // 兼容性检查和初始化
+        (function() {
+            'use strict';
+            
+            // 检查基本功能
+            if (!document.querySelector || !document.addEventListener) {
+                console.warn('浏览器版本过旧，可能影响使用体验');
+                return;
+            }
+            
+            // 页面加载完成后执行
+            function initPage() {
+                // 自动隐藏alert
+                setTimeout(function() {
+                    var alerts = document.querySelectorAll('.alert');
+                    for (var i = 0; i < alerts.length; i++) {
+                        alerts[i].style.display = 'none';
+                    }
+                }, 5000);
+                
+                // 回车键提交表单
+                document.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' || e.keyCode === 13) {
+                        var form = document.querySelector('form');
+                        if (form) {
+                            form.submit();
+                        }
+                    }
+                });
+                
+                // 表单验证
+                var form = document.querySelector('form');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        var workerId = document.getElementById('worker_id');
+                        var password = document.getElementById('password');
+                        
+                        if (!workerId.value.trim() || !password.value.trim()) {
+                            e.preventDefault();
+                            alert('请输入工号和密码');
+                            return false;
+                        }
+                        
+                        // 显示加载状态
+                        var submitBtn = form.querySelector('button[type="submit"]');
+                        if (submitBtn && window.AdminUtils) {
+                            AdminUtils.showLoading(submitBtn);
+                        }
+                    });
+                }
+            }
+            
+            // 确保DOM加载完成
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPage);
+            } else {
+                initPage();
+            }
+        })();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,471 @@
+{% extends "base.html" %}
+
+{% block title %}工人管理 - 水电班仓库管理系统{% endblock %}
+
+{% block page_title %}工人管理{% endblock %}
+
+{% block content %}
+<!-- 注册新员工按钮 -->
+<div class="mb-4">
+    <button type="button" class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#registerWorkerModal">
+        <i class="bi bi-person-plus"></i> 注册新员工
+    </button>
+</div>
+
+<!-- 工人列表 -->
+<div class="card">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="bi bi-people"></i> 工人列表
+        </h5>
+        <span class="badge bg-light text-dark">共 {{ workers|length }} 名工人</span>
+    </div>
+    <div class="card-body p-0">
+        {% if workers %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>工号</th>
+                        <th>姓名</th>
+                        <th>部门</th>
+                        <th>职位</th>
+                        <th>联系电话</th>
+                        <th>最后登录</th>
+                        <th>注册时间</th>
+                        <th>账号状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for worker in workers %}
+                    <tr>
+                        <td>
+                            <code>{{ worker.worker_id }}</code>
+                            {% if worker.worker_id in ['ADMIN', 'WH001'] %}
+                                <span class="badge bg-danger ms-1">管理员</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ worker.name }}</strong>
+                        </td>
+                        <td>{{ worker.department or '-' }}</td>
+                        <td>
+                            <span class="badge bg-primary">{{ worker.position or '-' }}</span>
+                        </td>
+                        <td>
+                            {% if worker.phone %}
+                                <a href="tel:{{ worker.phone }}" class="text-decoration-none">
+                                    <i class="bi bi-telephone"></i> {{ worker.phone }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if worker.last_login %}
+                                <small class="text-muted">
+                                    {{ worker.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            {% else %}
+                                <span class="text-muted">从未登录</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ worker.created_at.strftime('%Y-%m-%d') if worker.created_at else '-' }}
+                            </small>
+                        </td>
+                        <td>
+                            {% if worker.status == 'active' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> 启用
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> 禁用
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if worker.worker_id not in ['ADMIN', 'WH001'] %}
+                                <button type="button" 
+                                        class="btn btn-sm {% if worker.status == 'active' %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                                        onclick="toggleWorkerStatus('{{ worker.worker_id }}', '{{ worker.status }}')">
+                                    {% if worker.status == 'active' %}
+                                        <i class="bi bi-x-circle"></i> 禁用
+                                    {% else %}
+                                        <i class="bi bi-check-circle"></i> 启用
+                                    {% endif %}
+                                </button>
+                            {% else %}
+                                <span class="text-muted">
+                                    <i class="bi bi-shield-lock"></i> 管理员
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people display-1 text-muted"></i>
+            <h5 class="text-muted mt-3">没有工人信息</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 统计信息 -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-people-fill display-4 text-primary"></i>
+                <h5 class="card-title mt-2">总工人数</h5>
+                <h3 class="text-primary">{{ workers|length }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-check-circle-fill display-4 text-success"></i>
+                <h5 class="card-title mt-2">启用账号</h5>
+                <h3 class="text-success">{{ workers|selectattr('status', 'equalto', 'active')|list|length }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-x-circle-fill display-4 text-danger"></i>
+                <h5 class="card-title mt-2">禁用账号</h5>
+                <h3 class="text-danger">{{ workers|selectattr('status', 'equalto', 'inactive')|list|length }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-shield-fill display-4 text-warning"></i>
+                <h5 class="card-title mt-2">管理员</h5>
+                <h3 class="text-warning">
+                    {{ workers|selectattr('worker_id', 'in', ['ADMIN', 'WH001'])|list|length }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 注册新员工模态框 -->
+<div class="modal fade" id="registerWorkerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus"></i> 注册新员工
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="registerWorkerForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="workerId" class="form-label">
+                                    <i class="bi bi-person-badge"></i> 工号 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="workerId" name="worker_id" 
+                                       placeholder="例如：W006" required maxlength="20">
+                                <div class="form-text">工号长度至少3位，只能包含字母、数字、下划线和连字符</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="workerName" class="form-label">
+                                    <i class="bi bi-person"></i> 姓名 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="workerName" name="name" 
+                                       placeholder="请输入员工姓名" required maxlength="50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="workerDepartment" class="form-label">
+                                    <i class="bi bi-building"></i> 部门
+                                </label>
+                                <select class="form-select" id="workerDepartment" name="department">
+                                    <option value="">请选择部门</option>
+                                    <option value="水电班">水电班</option>
+                                    <option value="资产处">资产处</option>
+                                    <option value="维修班">维修班</option>
+                                    <option value="安全科">安全科</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="workerPosition" class="form-label">
+                                    <i class="bi bi-briefcase"></i> 职位
+                                </label>
+                                <select class="form-select" id="workerPosition" name="position">
+                                    <option value="">请选择职位</option>
+                                    <option value="班长">班长</option>
+                                    <option value="工人">工人</option>
+                                    <option value="技术员">技术员</option>
+                                    <option value="仓库管理员">仓库管理员</option>
+                                    <option value="系统管理员">系统管理员</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="workerPhone" class="form-label">
+                                    <i class="bi bi-telephone"></i> 联系电话
+                                </label>
+                                <input type="tel" class="form-control" id="workerPhone" name="phone" 
+                                       placeholder="请输入11位手机号" maxlength="11">
+                                <div class="form-text">请输入正确的11位手机号码</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="workerPassword" class="form-label">
+                                    <i class="bi bi-lock"></i> 初始密码 <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control" id="workerPassword" name="password" 
+                                       placeholder="请设置初始密码" required minlength="6" maxlength="50">
+                                <div class="form-text">密码长度至少6位</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>注意事项：</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>工号和姓名为必填项</li>
+                            <li>工号必须唯一，不能与现有员工重复</li>
+                            <li>初始密码由管理员设置，员工首次登录后建议修改</li>
+                            <li>新注册的员工账号默认为启用状态</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> 取消
+                </button>
+                <button type="button" class="btn btn-success" onclick="registerWorker()">
+                    <i class="bi bi-person-plus"></i> 注册员工
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 工人详情模态框 -->
+<div class="modal fade" id="workerDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">工人详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="workerDetailContent">
+                <!-- 动态加载内容 -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 注册新员工
+    function registerWorker() {
+        const form = document.getElementById('registerWorkerForm');
+        const formData = new FormData(form);
+        
+        // 验证必填字段
+        const workerId = formData.get('worker_id').trim();
+        const name = formData.get('name').trim();
+        const password = formData.get('password').trim();
+        
+        if (!workerId || !name || !password) {
+            showAlert('请填写所有必填字段', 'error');
+            return;
+        }
+        
+        if (workerId.length < 3) {
+            showAlert('工号长度至少3位', 'error');
+            return;
+        }
+        
+        if (password.length < 6) {
+            showAlert('密码长度至少6位', 'error');
+            return;
+        }
+        
+        // 验证手机号
+        const phone = formData.get('phone').trim();
+        if (phone && (phone.length !== 11 || !/^\d{11}$/.test(phone))) {
+            showAlert('请输入正确的11位手机号', 'error');
+            return;
+        }
+        
+        // 显示加载状态
+        const submitBtn = document.querySelector('#registerWorkerModal .btn-success');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> 注册中...';
+        submitBtn.disabled = true;
+        
+        // 提交数据
+        const data = {
+            worker_id: workerId,
+            name: name,
+            department: formData.get('department'),
+            position: formData.get('position'),
+            phone: phone,
+            password: password
+        };
+        
+        fetch('/api/register_worker', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('registerWorkerModal'));
+                modal.hide();
+                // 清空表单
+                form.reset();
+                // 刷新页面
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showAlert('注册失败: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('网络错误，请稍后重试', 'error');
+        })
+        .finally(() => {
+            // 恢复按钮状态
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    }
+    
+    // 切换工人状态
+    function toggleWorkerStatus(workerId, currentStatus) {
+        const action = currentStatus === 'active' ? '禁用' : '启用';
+        
+        if (!confirm(`确定要${action}工人 ${workerId} 吗？`)) {
+            return;
+        }
+        
+        fetch('/api/toggle_worker_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                worker_id: workerId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showAlert('操作失败: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('网络错误', 'error');
+        });
+    }
+    
+    // 显示工人详情
+    function showWorkerDetail(workerId) {
+        // 这里可以添加获取工人详细信息的逻辑
+        document.getElementById('workerDetailContent').innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+            </div>
+        `;
+        
+        const modal = new bootstrap.Modal(document.getElementById('workerDetailModal'));
+        modal.show();
+        
+        // 模拟加载详情
+        setTimeout(() => {
+            document.getElementById('workerDetailContent').innerHTML = `
+                <p>工人 ${workerId} 的详细信息将在此显示。</p>
+                <p class="text-muted">此功能可以扩展为显示工人的出库记录、登录历史等信息。</p>
+            `;
+        }, 1000);
+    }
+    
+    // 显示提示消息
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('main');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+    
+    // 添加表格行点击效果
+    document.querySelectorAll('tbody tr').forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(0, 123, 255, 0.1)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    // 统计卡片动画效果
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,227 @@
+<!--物资查询页面-->
+<view class="container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <view class="page-title">物资查询</view>
+    <view class="page-subtitle">{{canManage ? '查看和管理所有物资' : '查看物资信息'}}</view>
+  </view>
+
+  <!-- 搜索区域 -->
+  <view class="search-section">
+    <view class="search-box">
+      <input 
+        class="search-input" 
+        placeholder="输入物资名称、条形码或规格" 
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearchConfirm"
+        confirm-type="search"
+      />
+      <view class="search-actions">
+        <button class="search-btn" bindtap="onSearchConfirm">搜索</button>
+        <button class="clear-btn" bindtap="clearSearch" wx:if="{{searchKeyword}}">清空</button>
+      </view>
+    </view>
+    
+    <!-- 管理员添加按钮 -->
+    <view class="admin-actions" wx:if="{{canManage}}">
+      <button class="add-btn" bindtap="addMaterial">
+        <text class="add-icon">+</text>
+        添加物资
+      </button>
+    </view>
+  </view>
+
+  <!-- 搜索结果统计 -->
+  <view class="search-stats" wx:if="{{searchKeyword && !isLoading}}">
+    <text class="stats-text">找到 {{totalCount}} 个物资</text>
+  </view>
+
+  <!-- 物资列表 -->
+  <view class="materials-list" wx:if="{{materialsList.length > 0}}">
+    <view 
+      class="material-item" 
+      wx:for="{{materialsList}}" 
+      wx:key="barcode"
+      wx:for-index="index"
+    >
+      <!-- 物资基本信息 -->
+      <view class="material-header">
+        <view class="material-name">{{item.name}}</view>
+        <view class="material-stock {{item.stock <= 0 ? 'stock-empty' : ''}}">
+          库存：{{item.stock}}{{item.unit}}
+        </view>
+      </view>
+      
+      <view class="material-details">
+        <view class="detail-row">
+          <text class="detail-label">规格：</text>
+          <text class="detail-value">{{item.specification}}</text>
+        </view>
+        <view class="detail-row">
+          <text class="detail-label">条形码：</text>
+          <text class="detail-value">{{item.barcode}}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="material-actions">
+        <!-- 普通用户：只能添加到待出库 -->
+        <button 
+          class="action-btn add-cart-btn" 
+          bindtap="addToCart" 
+          data-index="{{index}}"
+          disabled="{{item.stock <= 0}}"
+        >
+          {{item.stock <= 0 ? '库存不足' : '添加到待出库'}}
+        </button>
+        
+        <!-- 管理员：可以编辑和删除 -->
+        <view class="admin-actions" wx:if="{{canManage}}">
+          <button 
+            class="action-btn edit-btn" 
+            bindtap="editMaterial" 
+            data-index="{{index}}"
+          >
+            编辑
+          </button>
+          <button 
+            class="action-btn delete-btn" 
+            bindtap="deleteMaterial" 
+            data-index="{{index}}"
+          >
+            删除
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载更多 -->
+  <view class="load-more" wx:if="{{hasMore && materialsList.length > 0}}">
+    <view class="loading" wx:if="{{isLoading}}">加载中...</view>
+    <view class="load-more-text" wx:else>上拉加载更多</view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!isLoading && materialsList.length === 0}}">
+    <view class="empty-icon">📦</view>
+    <view class="empty-text">
+      {{searchKeyword ? '未找到相关物资' : '请输入关键词搜索物资'}}
+    </view>
+    <view class="empty-hint" wx:if="{{!searchKeyword}}">
+      支持按名称、条形码、规格搜索
+    </view>
+  </view>
+
+  <!-- 加载中状态 -->
+  <view class="loading-state" wx:if="{{isLoading && materialsList.length === 0}}">
+    <view class="loading-spinner"></view>
+    <view class="loading-text">搜索中...</view>
+  </view>
+</view>
+
+<!-- 编辑/添加物资对话框 -->
+<view class="modal-overlay" wx:if="{{showEditDialog}}" bindtap="closeEditDialog">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <view class="modal-title">{{isAddMode ? '添加物资' : '编辑物资'}}</view>
+      <view class="modal-close" bindtap="closeEditDialog">×</view>
+    </view>
+    
+    <view class="modal-body">
+      <view class="form-group">
+        <label class="form-label">条形码</label>
+        <input 
+          class="form-input" 
+          placeholder="请输入条形码" 
+          value="{{formData.barcode}}"
+          bindinput="onFormInput"
+          data-field="barcode"
+          disabled="{{!isAddMode}}"
+        />
+      </view>
+      
+      <view class="form-group">
+        <label class="form-label">物资名称</label>
+        <input 
+          class="form-input" 
+          placeholder="请输入物资名称" 
+          value="{{formData.name}}"
+          bindinput="onFormInput"
+          data-field="name"
+        />
+      </view>
+      
+      <view class="form-group">
+        <label class="form-label">规格</label>
+        <input 
+          class="form-input" 
+          placeholder="请输入规格" 
+          value="{{formData.specification}}"
+          bindinput="onFormInput"
+          data-field="specification"
+        />
+      </view>
+      
+      <view class="form-group">
+        <label class="form-label">单位</label>
+        <input 
+          class="form-input" 
+          placeholder="请输入单位（如：个、件、米）" 
+          value="{{formData.unit}}"
+          bindinput="onFormInput"
+          data-field="unit"
+        />
+      </view>
+      
+      <view class="form-group">
+        <label class="form-label">库存数量</label>
+        <input 
+          class="form-input" 
+          placeholder="请输入库存数量" 
+          value="{{formData.stock}}"
+          bindinput="onFormInput"
+          data-field="stock"
+          type="number"
+        />
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="modal-btn cancel-btn" bindtap="closeEditDialog">取消</button>
+      <button class="modal-btn confirm-btn" bindtap="saveMaterial">
+        {{isAddMode ? '创建' : '保存'}}
+      </button>
+    </view>
+  </view>
+</view>
+
+<!-- 删除确认对话框 -->
+<view class="modal-overlay" wx:if="{{showDeleteConfirm}}" bindtap="closeDeleteConfirm">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <view class="modal-title">确认删除</view>
+      <view class="modal-close" bindtap="closeDeleteConfirm">×</view>
+    </view>
+    
+    <view class="modal-body">
+      <view class="confirm-text">
+        确定要删除物资 "{{deletingMaterial.name}}" 吗？
+      </view>
+      <view class="confirm-detail">
+        条形码：{{deletingMaterial.barcode}}<br/>
+        规格：{{deletingMaterial.specification}}<br/>
+        当前库存：{{deletingMaterial.stock}}{{deletingMaterial.unit}}
+      </view>
+      <view class="warning-text">
+        注意：删除后无法恢复！
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="modal-btn cancel-btn" bindtap="closeDeleteConfirm">取消</button>
+      <button class="modal-btn delete-btn" bindtap="confirmDelete">删除</button>
+    </view>
+  </view>
+</view>

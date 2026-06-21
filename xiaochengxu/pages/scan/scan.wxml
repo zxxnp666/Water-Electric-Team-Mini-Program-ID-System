@@ -1,0 +1,196 @@
+<!--pages/scan/scan.wxml-->
+<view class="main-container">
+  <view class="container">
+    
+    <!-- 扫码区域 -->
+    <view class="scan-main-card">
+      <view class="scan-header">
+        <view class="scan-title">📷 扫码出库</view>
+        <view class="scan-subtitle">智能识别条形码和二维码</view>
+      </view>
+      
+      <view class="scan-area">
+        <view class="scan-frame">
+          <view class="scan-corners">
+            <view class="corner corner-tl"></view>
+            <view class="corner corner-tr"></view>
+            <view class="corner corner-bl"></view>
+            <view class="corner corner-br"></view>
+          </view>
+          <view class="scan-icon-large">📱</view>
+          <view class="scan-hint">将条形码放入框内</view>
+        </view>
+      </view>
+      
+      <view class="scan-actions">
+        <view class="scan-btn-primary" bindtap="startScan">
+          <view class="scan-btn-icon">📷</view>
+          <view class="scan-btn-text">开始扫描</view>
+        </view>
+      </view>
+      
+      <view class="scan-tips">
+        <view class="tip-item">
+          <text class="tip-icon">💡</text>
+          <text class="tip-text">支持一维码和二维码识别</text>
+        </view>
+        <view class="tip-item">
+          <text class="tip-icon">🔍</text>
+          <text class="tip-text">确保条形码清晰可见</text>
+        </view>
+      </view>
+    </view>
+
+
+
+    <!-- 本次扫描结果 -->
+    <view class="card" wx:if="{{scannedMaterials.length > 0}}">
+      <view class="card-header">
+        <view class="card-title">📦 本次扫描 ({{scannedMaterials.length}})</view>
+        <view class="card-subtitle">点击数量可修改</view>
+      </view>
+      
+      <view class="scanned-list">
+        <view class="scanned-item" 
+              wx:for="{{scannedMaterials}}" 
+              wx:key="barcode">
+          <view class="scanned-info">
+            <view class="scanned-name">{{item.name}}</view>
+            <view class="scanned-spec">{{item.specification}}</view>
+            <view class="scanned-stock">库存: {{item.stock}}{{item.unit}}</view>
+          </view>
+          
+          <view class="scanned-controls">
+            <input class="quantity-input" 
+                   type="number" 
+                   value="{{item.quantity}}"
+                   data-index="{{index}}"
+                   bindblur="updateMaterialQuantity" />
+            <view class="unit-text">{{item.unit}}</view>
+            <view class="remove-btn" 
+                  bindtap="removeScannedMaterial" 
+                  data-index="{{index}}">
+              🗑️
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="card-footer">
+        <view class="flex" style="gap: 16rpx;">
+          <view class="btn btn-error btn-small" bindtap="clearCurrentScan">
+            清空本次
+          </view>
+          <view class="btn btn-success flex-1" bindtap="goToCart">
+            <text class="icon">🛒</text>前往待出库 ({{totalItems}})
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 扫描历史 -->
+    <view class="card" wx:if="{{scanHistory.length > 0}}">
+      <view class="card-header">
+        <view class="card-title">📊 最近扫描</view>
+        <view class="card-subtitle">点击快速添加</view>
+      </view>
+      
+      <view class="list">
+        <view class="list-item" 
+              wx:for="{{scanHistory}}" 
+              wx:key="barcode"
+              bindtap="selectFromHistory"
+              data-index="{{index}}">
+          <view class="list-item-icon">📦</view>
+          <view class="list-item-content">
+            <view class="list-item-title">{{item.name}}</view>
+            <view class="list-item-subtitle">
+              {{item.specification}} | 扫描{{item.scanCount}}次
+            </view>
+          </view>
+          <view class="list-item-arrow">＋</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 数量选择对话框 -->
+    <view class="quantity-dialog-mask" wx:if="{{showQuantityDialog}}" bindtap="closeQuantityDialog">
+      <view class="quantity-dialog" catchtap="">
+        <view class="dialog-header">
+          <view class="dialog-title">选择出库数量</view>
+          <view class="dialog-close" bindtap="closeQuantityDialog">✕</view>
+        </view>
+        
+        <view class="dialog-content">
+          <!-- 物资信息 -->
+          <view class="material-info">
+            <view class="material-name">{{currentMaterial.name}}</view>
+            <view class="material-spec">{{currentMaterial.specification}}</view>
+            <view class="material-stock">库存：{{currentMaterial.stock}}{{currentMaterial.unit}}</view>
+          </view>
+          
+          <!-- 数量选择器 -->
+          <view class="quantity-selector">
+            <view class="quantity-label">出库数量</view>
+            <view class="quantity-controls">
+              <view class="quantity-btn {{selectedQuantity <= 1 ? 'disabled' : ''}}" 
+                    catchtap="decreaseQuantity">－</view>
+              <input class="quantity-input" 
+                     type="number" 
+                     value="{{selectedQuantity}}"
+                     bindinput="onQuantityChange"
+                     bindconfirm="onQuantityConfirm"
+                     bindblur="onQuantityBlur"
+                     confirm-type="done"
+                     catchtap=""
+                     maxlength="4" />
+              <view class="quantity-btn {{selectedQuantity >= currentMaterial.stock ? 'disabled' : ''}}" 
+                    catchtap="increaseQuantity">＋</view>
+            </view>
+            <view class="quantity-unit">{{currentMaterial.unit}}</view>
+          </view>
+          
+          <!-- 快速选择 -->
+          <view class="quick-select">
+            <view class="quick-select-label">快速选择</view>
+            <view class="quick-select-buttons">
+              <view class="quick-btn {{selectedQuantity === 1 ? 'active' : ''}}" 
+                    catchtap="selectQuickQuantityInDialog" data-quantity="1">1</view>
+              <view class="quick-btn {{selectedQuantity === 2 ? 'active' : ''}}" 
+                    catchtap="selectQuickQuantityInDialog" data-quantity="2"
+                    wx:if="{{currentMaterial.stock >= 2}}">2</view>
+              <view class="quick-btn {{selectedQuantity === 5 ? 'active' : ''}}" 
+                    catchtap="selectQuickQuantityInDialog" data-quantity="5"
+                    wx:if="{{currentMaterial.stock >= 5}}">5</view>
+              <view class="quick-btn {{selectedQuantity === 10 ? 'active' : ''}}" 
+                    catchtap="selectQuickQuantityInDialog" data-quantity="10"
+                    wx:if="{{currentMaterial.stock >= 10}}">10</view>
+              <view class="quick-btn {{selectedQuantity === currentMaterial.stock ? 'active' : ''}}" 
+                    catchtap="selectQuickQuantityInDialog" data-quantity="{{currentMaterial.stock}}"
+                    wx:if="{{currentMaterial.stock > 10}}">全部</view>
+            </view>
+          </view>
+        </view>
+        
+        <view class="dialog-footer">
+          <view class="dialog-btn cancel-btn" bindtap="closeQuantityDialog">取消</view>
+          <view class="dialog-btn confirm-btn" bindtap="confirmAddMaterial">确认添加</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view class="loading" wx:if="{{isLoading}}">
+      <text>🔄 查询中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{scannedMaterials.length === 0 && scanHistory.length === 0 && !isLoading}}">
+      <view class="empty-icon">📷</view>
+      <view class="empty-text">开始扫描条形码</view>
+      <view class="empty-subtext">扫描物资条形码进行快速出库</view>
+    </view>
+
+  </view>
+</view>
+

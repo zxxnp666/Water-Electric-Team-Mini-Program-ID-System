@@ -1,0 +1,109 @@
+/* pages/index/index.wxss */
+
+/* 首页特定样式 */
+.main-container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+}
+
+/* 用户信息卡片特殊样式 */
+.user-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* 统计卡片动画 */
+.stats-card {
+  transition: transform 0.3s ease;
+}
+
+.stats-card:active {
+  transform: scale(0.95);
+}
+
+/* 单个统计卡片居中显示 */
+.stats-card.single-stat {
+  margin: 0 auto;
+  max-width: 300rpx;
+}
+
+/* 快捷操作按钮网格 */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+  margin: 32rpx 0;
+}
+
+/* 最近物资列表项 */
+.recent-material-item {
+  background: white;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(46, 52, 64, 0.08);
+  transition: all 0.3s ease;
+}
+
+.recent-material-item:active {
+  transform: translateY(2rpx);
+  box-shadow: 0 1rpx 4rpx rgba(46, 52, 64, 0.12);
+}
+
+/* 服务器状态指示器 */
+.status-indicator {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  margin-right: 12rpx;
+}
+
+.status-connected {
+  background: #A3BE8C;
+  box-shadow: 0 0 12rpx rgba(163, 190, 140, 0.5);
+}
+
+.status-disconnected {
+  background: #BF616A;
+  box-shadow: 0 0 12rpx rgba(191, 97, 106, 0.5);
+}
+
+.status-checking {
+  background: #EBCB8B;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* 购物车徽章 */
+.cart-badge {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  background: #BF616A;
+  color: white;
+  border-radius: 50%;
+  width: 32rpx;
+  height: 32rpx;
+  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+
+/* 响应式布局 */
+@media screen and (max-width: 400px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+}

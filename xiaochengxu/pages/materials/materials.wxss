@@ -1,0 +1,442 @@
+/* 物资查询页面样式 */
+
+.container {
+  padding: 20rpx;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 页面标题 */
+.page-header {
+  margin-bottom: 30rpx;
+}
+
+.page-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.page-subtitle {
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 搜索区域 */
+.search-section {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.search-input {
+  flex: 1;
+  height: 80rpx;
+  padding: 0 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  background-color: #fafafa;
+}
+
+.search-input:focus {
+  border-color: #007aff;
+  background-color: white;
+}
+
+.search-actions {
+  display: flex;
+  gap: 15rpx;
+}
+
+.search-btn {
+  height: 80rpx;
+  padding: 0 30rpx;
+  background: linear-gradient(135deg, #007aff, #0056cc);
+  color: white;
+  border: none;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.clear-btn {
+  height: 80rpx;
+  padding: 0 20rpx;
+  background: #f0f0f0;
+  color: #666;
+  border: none;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+}
+
+/* 管理员操作区域 */
+.admin-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  height: 70rpx;
+  padding: 0 25rpx;
+  background: linear-gradient(135deg, #34c759, #28a745);
+  color: white;
+  border: none;
+  border-radius: 35rpx;
+  font-size: 26rpx;
+  font-weight: bold;
+}
+
+.add-icon {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+/* 搜索统计 */
+.search-stats {
+  margin-bottom: 20rpx;
+  padding: 0 10rpx;
+}
+
+.stats-text {
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 物资列表 */
+.materials-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.material-item {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.material-item:active {
+  transform: scale(0.98);
+}
+
+/* 物资头部 */
+.material-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+.material-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.material-stock {
+  font-size: 26rpx;
+  color: #34c759;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.material-stock.stock-empty {
+  color: #ff3b30;
+}
+
+/* 物资详情 */
+.material-details {
+  margin-bottom: 25rpx;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+  font-size: 26rpx;
+}
+
+.detail-label {
+  color: #666;
+  width: 120rpx;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #333;
+  flex: 1;
+}
+
+/* 操作按钮 */
+.material-actions {
+  display: flex;
+  gap: 15rpx;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  height: 60rpx;
+  padding: 0 20rpx;
+  border: none;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.add-cart-btn {
+  background: linear-gradient(135deg, #007aff, #0056cc);
+  color: white;
+  flex: 1;
+  min-width: 200rpx;
+}
+
+.add-cart-btn:disabled {
+  background: #e0e0e0;
+  color: #999;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #ff9500, #e6820e);
+  color: white;
+  min-width: 100rpx;
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #ff3b30, #d70015);
+  color: white;
+  min-width: 100rpx;
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 40rpx 0;
+  color: #666;
+  font-size: 26rpx;
+}
+
+.loading {
+  color: #007aff;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 100rpx 40rpx;
+  color: #999;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  margin-bottom: 15rpx;
+  color: #666;
+}
+
+.empty-hint {
+  font-size: 26rpx;
+  color: #999;
+}
+
+/* 加载状态 */
+.loading-state {
+  text-align: center;
+  padding: 100rpx 40rpx;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid #e0e0e0;
+  border-top: 4rpx solid #007aff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 30rpx;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 模态对话框 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 40rpx;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20rpx;
+  width: 100%;
+  max-width: 600rpx;
+  max-height: 80vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50rpx) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #999;
+  cursor: pointer;
+  padding: 10rpx;
+  margin: -10rpx;
+}
+
+.modal-body {
+  padding: 30rpx;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* 表单样式 */
+.form-group {
+  margin-bottom: 30rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 15rpx;
+  font-weight: bold;
+}
+
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 20rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  background-color: #fafafa;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: #007aff;
+  background-color: white;
+}
+
+.form-input:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+}
+
+/* 确认删除样式 */
+.confirm-text {
+  font-size: 30rpx;
+  color: #333;
+  margin-bottom: 20rpx;
+  font-weight: bold;
+}
+
+.confirm-detail {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 20rpx;
+  padding: 20rpx;
+  background-color: #f8f8f8;
+  border-radius: 10rpx;
+}
+
+.warning-text {
+  font-size: 24rpx;
+  color: #ff3b30;
+  text-align: center;
+  font-weight: bold;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 20rpx;
+  padding: 30rpx;
+  border-top: 2rpx solid #f0f0f0;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 80rpx;
+  border: none;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.cancel-btn {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #007aff, #0056cc);
+  color: white;
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #ff3b30, #d70015);
+  color: white;
+}

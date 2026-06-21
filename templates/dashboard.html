@@ -1,0 +1,432 @@
+{% extends "base.html" %}
+
+{% block title %}仪表板 - 水电班仓库管理系统{% endblock %}
+
+{% block page_title %}仪表板{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <!-- 统计卡片 -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">总材料数量</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.total_materials or 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-box-seam fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card-warning h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">低库存材料</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.low_stock_materials or 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card-success h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">今日出库记录</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.today_records or 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-arrow-up-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stats-card-info h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">待处理记录</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ stats.pending_records or 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-clock-history fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 快速操作 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning"></i> 快速操作
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{{ url_for('materials') }}" class="btn btn-primary btn-custom w-100 text-white">
+                            <i class="bi bi-box-seam fs-1"></i><br>
+                            <small>材料管理</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('add_materials') }}" class="btn btn-warning btn-custom w-100 text-white">
+                            <i class="bi bi-plus-circle-fill fs-1"></i><br>
+                            <small>补充材料</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('records') }}" class="btn btn-success btn-custom w-100 text-white">
+                            <i class="bi bi-journal-text fs-1"></i><br>
+                            <small>记录管理</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('workers') }}" class="btn btn-info btn-custom w-100 text-white">
+                            <i class="bi bi-people fs-1"></i><br>
+                            <small>工人管理</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统信息 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle"></i> 系统信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <strong>系统版本:</strong><br>
+                        <span class="text-muted">v2.0.0</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <strong>当前用户:</strong><br>
+                        <span class="text-muted">{{ session.admin_name }}</span>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <strong>登录时间:</strong><br>
+                        <span class="text-muted current-time"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <strong>权限级别:</strong><br>
+                        <span class="badge bg-success">{{ session.admin_position }}</span>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>工人总数:</strong>
+                        <span class="badge bg-primary">{{ stats.total_workers or 0 }} 人</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近活动 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-activity"></i> 功能说明
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <h6><i class="bi bi-box-seam text-primary"></i> 材料管理</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li>• 查看所有材料库存</li>
+                            <li>• 编辑材料信息</li>
+                            <li>• 设置最低库存警告</li>
+                            <li>• 搜索和筛选材料</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6><i class="bi bi-plus-circle-fill text-warning"></i> 补充材料</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li>• 批量添加新材料</li>
+                            <li>• 智能库存合并</li>
+                            <li>• 自动条码生成</li>
+                            <li>• 文本批量导入</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6><i class="bi bi-journal-text text-success"></i> 记录管理</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li>• 查看所有出库记录</li>
+                            <li>• 更新记录状态</li>
+                            <li>• 按状态和用户筛选</li>
+                            <li>• 导出记录数据</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h6><i class="bi bi-people text-info"></i> 工人管理</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li>• 查看所有工人信息</li>
+                            <li>• 启用/禁用工人账号</li>
+                            <li>• 查看登录记录</li>
+                            <li>• 管理工人权限</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 补充材料功能详细说明 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-plus-circle-fill"></i> 补充材料功能说明
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-info-circle"></i> 智能库存管理
+                    </h6>
+                    <p class="mb-2">
+                        <strong>智能库存合并：</strong>如果补充的材料与现有材料的<strong>名称、规格、单位</strong>完全相同，系统将自动合并库存。
+                    </p>
+                    <p class="mb-2">
+                        <strong>新材料创建：</strong>如果材料信息有任何不同，系统将创建新的材料条目并自动生成条码。
+                    </p>
+                    <p class="mb-0">
+                        <strong>必填字段：</strong>材料名称、规格型号、补充数量为必填项，请确保信息完整准确。
+                    </p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-keyboard text-primary"></i> 输入方式</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>手动输入：</strong>
+                                <span class="text-muted">表格形式逐行填写材料信息</span>
+                            </li>
+                            <li class="mb-2">
+                                <strong>文本批量：</strong>
+                                <span class="text-muted">按格式批量粘贴导入</span>
+                                <br><code class="small">格式：名称|规格|单位|品牌|数量</code>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-gear text-success"></i> 智能处理</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <strong>库存合并：</strong>
+                                <span class="text-muted">相同材料自动累加库存</span>
+                            </li>
+                            <li class="mb-2">
+                                <strong>条码生成：</strong>
+                                <span class="text-muted">新材料自动生成唯一条码</span>
+                            </li>
+                            <li class="mb-2">
+                                <strong>批量验证：</strong>
+                                <span class="text-muted">实时验证数据完整性</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">快速开始</h6>
+                                <small class="text-muted">点击下方按钮开始补充材料</small>
+                            </div>
+                            <a href="{{ url_for('add_materials') }}" class="btn btn-warning">
+                                <i class="bi bi-plus-circle-fill"></i> 立即补充材料
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    /* 快速操作按钮样式增强 */
+    .btn-custom {
+        padding: 1.5rem 1rem;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-custom:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-custom i {
+        display: block;
+        margin-bottom: 0.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .btn-custom:hover i {
+        transform: scale(1.1);
+    }
+    
+    .btn-custom small {
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* 为不同按钮添加渐变背景 */
+    .btn-primary.btn-custom {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    }
+    
+    .btn-warning.btn-custom {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    }
+    
+    .btn-success.btn-custom {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    }
+    
+    .btn-info.btn-custom {
+        background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+    }
+    
+    /* 添加脉冲动画效果 */
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+        }
+    }
+    
+    .btn-custom:active {
+        animation: pulse 0.5s;
+    }
+</style>
+
+<script>
+    // 实时更新时间
+    function updateCurrentTime() {
+        const timeElement = document.querySelector('.current-time');
+        if (timeElement) {
+            const now = new Date();
+            const timeString = now.getFullYear() + '-' + 
+                             String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                             String(now.getDate()).padStart(2, '0') + ' ' + 
+                             String(now.getHours()).padStart(2, '0') + ':' + 
+                             String(now.getMinutes()).padStart(2, '0') + ':' + 
+                             String(now.getSeconds()).padStart(2, '0');
+            timeElement.textContent = timeString;
+        }
+    }
+    
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    
+    // 添加卡片悬停效果
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // 为快速操作按钮添加点击效果
+    document.querySelectorAll('.btn-custom').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            // 创建涟漪效果
+            const ripple = document.createElement('span');
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+            
+            ripple.style.cssText = `
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.6);
+                transform: scale(0);
+                animation: ripple 0.6s linear;
+                left: ${x}px;
+                top: ${y}px;
+                width: ${size}px;
+                height: ${size}px;
+            `;
+            
+            this.appendChild(ripple);
+            
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
+        });
+    });
+    
+    // 添加涟漪动画
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}
+
